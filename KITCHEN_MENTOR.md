@@ -33,7 +33,8 @@ Recipe output structure (like Gal's approved Gemini example):
 2. סנכרון ורצף עבודה (Workflow) — numbered steps on a minute timeline ("שלב 3: צריבת העוף (דקה 10)"), heat levels, sensory cues for doneness (color/texture), the science in one line where it matters (e.g. תגובת מייאר).
 3. Finish with plating/serving as a Sharing centerpiece.
 
-## NotebookLM prompt template (produce EXACTLY this format when Gal asks for a NotebookLM prompt)
+## NotebookLM prompt template
+Produce ONLY when Gal explicitly asks for it — never append it automatically to chat recipes. When asked, use EXACTLY this format:
 ```
 פרומפט להזנה ב-NotebookLM (אכיפת אילוצים קשיחה)
 DO NOT SUMMARIZE.

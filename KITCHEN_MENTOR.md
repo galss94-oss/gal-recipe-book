@@ -51,3 +51,22 @@ DO NOT SUMMARIZE.
 סגנון ויזואלי: סגנון איורי עשיר, תקריב (Macro) על [אלמנט מרכזי במנה], אווירת "ביסטרו Sharing", מבוסס על "Gemini generated image".
 שפה: עברית בלבד.
 ```
+
+
+---
+
+## Uploading a NotebookLM PDF to the recipe book ("the portal")
+
+When Gal uploads a NotebookLM recipe PDF and says "upload it to the portal / add it to the book":
+
+1. Render every PDF page to a JPEG data URI matching the app format: width **1200px**, quality **0.72** (`data:image/jpeg;base64,...`).
+2. Append a new object to the `BUILTIN` array in `index.html` with the next `b#` id:
+   `{id, title, desc, category, time, pages:[...]}`.
+   - `title` / `desc`: read from the PDF cover (Hebrew).
+   - `time`: total minutes from the recipe timeline.
+3. Commit and push to `origin/main` — GitHub Pages serves it at
+   https://galss94-oss.github.io/gal-recipe-book/ and it appears on Gal's phone.
+
+**Category rule (identify automatically, don't ask):** infer the category from the dish and stay consistent with existing `BUILTIN` categories — main dishes, including pasta (e.g. bolognese), go under **עיקריות**; sides under **תוספות**; desserts under **קינוחים**; breakfasts under **ארוחות בוקר**.
+
+Auth note: pushing needs the `gh` CLI logged in (`gh auth login`, scope `repo`) with `gh auth setup-git`. If the temp `gh` binary is gone, reinstall and re-run the device-code login.

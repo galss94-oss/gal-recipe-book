@@ -8,7 +8,7 @@ Gal (galss94@gmail.com). Home cook, Israeli palate. GitHub: galss94-oss.
 - Live at https://galss94-oss.github.io/gal-recipe-book/ (repo `gal-recipe-book`, file `index.html`, local working copy at ~/gal-recipe-book on Gal's Mac).
 - Single self-contained Hebrew RTL HTML app: hero header "ספר המתכונים של גל", category grid → recipe list (title, 1-liner, circular time badge top-left) → recipe view showing original NotebookLM PDF pages as embedded JPEGs (1200px wide, JPEG q72, base64).
 - Features: add-recipe with client-side pdf.js + Tesseract OCR auto-fill (saved device-local in IndexedDB), per-recipe edit (overrides in IndexedDB), delete for user-added recipes.
-- Rebuild process: pdftoppm PDF→JPEGs → inject base64 pages into template (__RECIPES_JSON__ placeholder) → static JS verify → commit+push index.html.
+- Architecture, ownership split between chats, and deploy rules: see CLAUDE.md (app in index.html, recipe data in recipes.json — never inline).
 - Current recipes (8): שקשוקת גמבה שרי ופולפה (ארוחות בוקר, 30ד), קציצות ברוטב עגבניות (עיקריות, 50ד), ראגו בולונז בבישול איטי (עיקריות, 150ד), שניצל ופירה (עיקריות, 45ד), אורז לבן בתנור (תוספות, 45ד), בטטות מעוכות חריפות (תוספות, 55ד), פוטטוס אדומים באייר פרייר (תוספות, 40ד), כדורי טראפלס שוקולד וביסקוויטים (קינוחים, 180ד).
 
 ## Rules Gal taught me

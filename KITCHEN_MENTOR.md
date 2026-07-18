@@ -70,3 +70,20 @@ When Gal uploads a NotebookLM recipe PDF and says "upload it to the portal / add
 **Category rule (identify automatically, don't ask):** infer the category from the dish and stay consistent with existing `BUILTIN` categories — main dishes, including pasta (e.g. bolognese), go under **עיקריות**; sides under **תוספות**; desserts under **קינוחים**; breakfasts under **ארוחות בוקר**.
 
 Auth note: pushing needs the `gh` CLI logged in (`gh auth login`, scope `repo`) with `gh auth setup-git`. If the temp `gh` binary is gone, reinstall and re-run the device-code login.
+
+### ⚠️ Recipes now live in `recipes.json` — NOT in `index.html`
+
+As of the recipes.json split, `index.html` contains **only the app** (design, layout, logic)
+and fetches `recipes.json` at startup. The recipe data is a plain JSON array:
+
+```json
+[{"id":"b1","title":"...","desc":"...","category":"...","time":30,"pages":["data:image/jpeg;base64,..."]}]
+```
+
+**To add a recipe:** append an object to `recipes.json` with the next `b#` id. Do **not**
+touch `index.html`.
+
+**When editing `index.html`** (design, icons, features): always `git pull` first and edit the
+current file in place. Never rebuild it from a saved/older copy — that is what silently
+destroyed recipes b9 and b10 three times (commits `fa24619`, `8a89aa4`, `d6ef990`).
+Recipe data is no longer in that file, so this is now much safer, but the rule still holds.

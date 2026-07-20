@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="מתכונים של גל">
 <meta name="theme-color" content="#f6efe2">
@@ -13,12 +14,13 @@
 <title>ספר המתכונים של גל</title>
 <style>
   :root{
-    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#93816f;
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
     --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
     --frame:#b98d54;
     --shadow:0 3px 12px rgba(66,51,42,.10);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  :focus-visible{outline:3px solid var(--accent2); outline-offset:2px; border-radius:8px;}
   body{
     margin:0; color:var(--ink);
     background:
@@ -50,7 +52,7 @@
     position:relative; text-align:center; margin:6px 0 24px;
     background:var(--card);
     border:2px solid var(--frame); border-radius:20px;
-    box-shadow:var(--shadow); padding:28px 18px 22px; overflow:hidden;
+    box-shadow:var(--shadow); padding:18px 16px 16px; overflow:hidden;
   }
   .hero::before{
     content:""; position:absolute; inset:7px; pointer-events:none;
@@ -58,15 +60,10 @@
   }
   .hero .orn{color:var(--accent2); font-size:15px; letter-spacing:6px; margin-bottom:6px;}
   .hero h2{
-    margin:0; font-size:30px; font-weight:800; color:#5b3a1e; letter-spacing:.3px;
+    margin:0; font-size:25px; font-weight:800; color:#5b3a1e; letter-spacing:.3px;
     text-shadow:0 1px 0 #fff;
   }
-  .hero .tag{color:var(--muted); font-size:14.5px; margin:8px 0 14px;}
-  .hero .foods{font-size:24px; letter-spacing:10px; padding-right:10px;}
-  .hero .rule{
-    width:120px; margin:14px auto 0; border:none; border-top:2px solid var(--frame);
-    position:relative; opacity:.7;
-  }
+  .hero .tag{color:var(--muted); font-size:13px; margin:5px 0 0;}
   .section-label{
     display:flex; align-items:center; gap:12px; color:var(--muted);
     font-size:14px; font-weight:700; margin:0 4px 14px;
@@ -85,11 +82,13 @@
     border:1px dashed var(--line); border-radius:13px;
   }
   .cat-card:active{transform:scale(.96);}
-  .cat-card .emoji{
-    font-size:40px; display:inline-block; margin-bottom:10px;
+  .cat-card .icon{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:60px; height:60px; margin-bottom:8px; color:var(--accent);
     background:radial-gradient(circle, var(--accent-soft) 0%, transparent 72%);
-    border-radius:50%; padding:6px;
+    border-radius:50%;
   }
+  .cat-card .icon svg{width:38px; height:38px;}
   .cat-card .name{font-weight:800; font-size:16.5px; color:#5b3a1e;}
   .cat-card .count{color:var(--muted); font-size:13px; margin-top:4px;}
 
@@ -167,6 +166,106 @@
   .progress{display:none; text-align:center; color:var(--accent); font-weight:800; margin-top:14px;}
   .empty{color:var(--muted); text-align:center; padding:40px 0;}
   .new-cat-input{display:none; margin-top:8px;}
+
+  /* ---- Search ---- */
+  .search-wrap{position:relative; margin-top:12px;}
+  .search-wrap input{
+    width:100%; padding:11px 40px 11px 36px; border:1px solid var(--line);
+    border-radius:22px; font-size:16px; font-family:inherit;
+    background:#fffdf8; color:var(--ink); text-align:right;
+  }
+  .search-wrap .mag{
+    position:absolute; top:50%; transform:translateY(-50%); right:14px;
+    color:var(--muted); pointer-events:none; display:flex;
+  }
+  .search-clear{
+    position:absolute; top:50%; transform:translateY(-50%); left:8px;
+    border:none; background:none; color:var(--muted); font-size:20px;
+    cursor:pointer; padding:4px 8px; display:none; font-family:inherit;
+  }
+  .search-clear.show{display:block;}
+
+  /* ---- Horizontal strips (favourites / recent) ---- */
+  .strip{display:flex; gap:12px; overflow-x:auto; padding:2px 2px 10px; margin-bottom:18px;
+         scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch;}
+  .strip::-webkit-scrollbar{display:none;}
+  .mini{
+    flex:0 0 132px; background:var(--card); border:1.5px solid var(--frame);
+    border-radius:14px; overflow:hidden; cursor:pointer; box-shadow:var(--shadow);
+    scroll-snap-align:start; transition:transform .12s ease;
+  }
+  .mini:active{transform:scale(.97);}
+  .mini img{width:100%; height:76px; object-fit:cover; display:block; background:var(--accent-soft);}
+  .mini .t{font-size:12.5px; font-weight:700; color:#5b3a1e; padding:7px 8px 9px; line-height:1.35;}
+
+  /* ---- Sort chips ---- */
+  .chips{display:flex; gap:8px; margin:0 2px 14px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+    font-size:13.5px; font-weight:700; padding:7px 14px; border-radius:18px;
+    cursor:pointer; font-family:inherit;
+  }
+  .chip.on{background:var(--accent-soft); color:var(--accent); border-color:var(--accent2);}
+
+  /* ---- Favourite button ---- */
+  .fav-btn{
+    border:1px solid var(--frame); background:var(--card); color:var(--accent);
+    font-size:14px; font-weight:700; padding:8px 16px; border-radius:20px;
+    cursor:pointer; font-family:inherit; box-shadow:var(--shadow);
+  }
+  .fav-btn.on{background:var(--accent-soft);}
+  .card-fav{
+    position:absolute; bottom:6px; left:8px; font-size:15px; color:var(--accent2);
+    pointer-events:none;
+  }
+
+  /* ---- Recipe pages ---- */
+  .page-wrap{position:relative; margin-bottom:14px;}
+  .page-wrap img{margin:0 !important; cursor:zoom-in;}
+  .page-num{
+    position:absolute; bottom:10px; left:10px;
+    background:rgba(66,51,42,.72); color:#fff; font-size:12px; font-weight:700;
+    padding:3px 9px; border-radius:12px; backdrop-filter:blur(4px);
+  }
+  .recipe-actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin:18px 0 10px;}
+
+  /* ---- Lightbox ---- */
+  .lightbox{
+    position:fixed; inset:0; z-index:60; background:rgba(38,29,22,.94);
+    display:none; overflow:auto; -webkit-overflow-scrolling:touch;
+  }
+  .lightbox.open{display:block;}
+  .lightbox img{display:block; width:100%; margin:0 auto;}
+  .lightbox img.zoom{width:220%; max-width:none;}
+  .lb-close{
+    position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; z-index:61;
+    width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
+    background:rgba(253,250,243,.92); color:var(--ink); font-size:22px; line-height:1;
+    font-family:inherit;
+  }
+  .lb-hint{
+    position:fixed; bottom:calc(16px + env(safe-area-inset-bottom)); right:0; left:0;
+    text-align:center; color:#f4e3cd; font-size:12.5px; z-index:61; pointer-events:none;
+  }
+
+  /* ---- Loading skeleton ---- */
+  .skel{
+    background:linear-gradient(100deg, #f1e6d3 30%, #f9f1e3 50%, #f1e6d3 70%);
+    background-size:220% 100%; animation:sh 1.1s infinite linear;
+    border-radius:18px; height:118px;
+  }
+  @keyframes sh{from{background-position:180% 0}to{background-position:-40% 0}}
+
+  .wake-note{
+    text-align:center; color:var(--muted); font-size:12px; margin:2px 0 10px;
+  }
+
+  @media (min-width:900px){
+    main{max-width:860px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important; animation:none !important;}
+  }
 </style>
 </head>
 <body>
@@ -183,22 +282,51 @@
       <div class="orn">✦ ❧ ✦</div>
       <h2>ספר המתכונים של גל</h2>
       <p class="tag">מדריכים קולינריים מצוירים · צעד אחר צעד</p>
-      <div class="foods">🍳🍝🍫🥔</div>
-      <hr class="rule">
+      <div class="search-wrap">
+        <span class="mag" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </span>
+        <input type="search" id="searchInput" placeholder="חיפוש מתכון..."
+               aria-label="חיפוש מתכון" autocomplete="off">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="נקה חיפוש">✕</button>
+      </div>
     </div>
-    <div class="section-label">הקטגוריות שלי</div>
-    <div class="grid" id="catGrid"></div>
+
+    <div id="searchResults" style="display:none"></div>
+
+    <div id="homeSections">
+      <div id="favSection" style="display:none">
+        <div class="section-label">המועדפים שלי</div>
+        <div class="strip" id="favStrip"></div>
+      </div>
+      <div id="recentSection" style="display:none">
+        <div class="section-label">בישלת לאחרונה</div>
+        <div class="strip" id="recentStrip"></div>
+      </div>
+      <div class="section-label">הקטגוריות שלי</div>
+      <div class="grid" id="catGrid"></div>
+    </div>
   </section>
 
   <!-- CATEGORY -->
   <section class="view" id="view-category">
+    <div class="chips" id="sortChips">
+      <button class="chip" data-sort="recent" onclick="setSort('recent')">חדשים</button>
+      <button class="chip" data-sort="alpha" onclick="setSort('alpha')">א-ב</button>
+      <button class="chip" data-sort="time" onclick="setSort('time')">זמן הכנה</button>
+    </div>
     <div id="recipeList"></div>
   </section>
 
   <!-- RECIPE -->
   <section class="view" id="view-recipe">
-    <div class="edit-row"><button class="edit-btn" onclick="openEdit()">✏️ עריכת פרטים</button></div>
+    <p class="wake-note" id="wakeNote"></p>
     <div class="pages" id="recipePages"></div>
+    <div class="recipe-actions">
+      <button class="fav-btn" id="favBtn" onclick="toggleFav()"></button>
+      <button class="edit-btn" onclick="openEdit()">✏️ עריכת פרטים</button>
+    </div>
     <div id="recipeActions"></div>
   </section>
 
@@ -242,10 +370,30 @@
   </section>
 </main>
 
-<button class="add-btn" id="addBtn" onclick="openAdd()" title="הוסף מתכון">+</button>
+<button class="add-btn" id="addBtn" onclick="openAdd()" title="הוסף מתכון" aria-label="הוסף מתכון">+</button>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lb-close" onclick="closeLightbox()" aria-label="סגור">✕</button>
+  <img id="lbImg" alt="">
+  <p class="lb-hint">הקש על התמונה להגדלה · הקש ✕ לסגירה</p>
+</div>
 
 <script>
-const CAT_EMOJI = {"קינוחים":"🍫","ארוחות בוקר":"🍳","עיקריות":"🍲","סלטים":"🥗","מרקים":"🍜","מאפים":"🥐","תוספות":"🥔","משקאות":"🥤","פסטות":"🍝"};
+/* hand-drawn style line icons, one per category */
+const SVG = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const CAT_ICON = {
+  "ארוחות בוקר": SVG('<path d="M7.5 5.6c3-1.6 6.2-.5 7.2 1.7.7 1.6 2.6 1.4 3.4 2.9 1 1.9-.3 4.6-2.6 5.5-2 .8-3.2-.3-5 .6-2.1 1-4.6.5-5.8-1.3-1.5-2.2-.4-7.7 2.8-9.4Z"/><circle cx="11" cy="10.4" r="2.4"/>'),
+  "עיקריות":     SVG('<path d="M4 9.5h16V14a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9.5Z"/><path d="M2.6 8.8h18.8"/><path d="M2 11.5h2M20 11.5h2"/><path d="M9 5.6c0-1 1-1.4 1-2.4M14 5.6c0-1 1-1.4 1-2.4"/>'),
+  "תוספות":      SVG('<path d="M3.6 11.5h16.8a8.4 8.4 0 0 1-16.8 0Z"/><path d="M2.6 11.5h18.8"/><circle cx="9" cy="6.6" r=".9"/><circle cx="12.6" cy="5.2" r=".9"/><circle cx="15.6" cy="7.4" r=".9"/>'),
+  "קינוחים":     SVG('<path d="M6 11.2h12l-1.4 7.4a1.5 1.5 0 0 1-1.5 1.2H8.9a1.5 1.5 0 0 1-1.5-1.2L6 11.2Z"/><path d="M7.2 11.2a2.6 2.6 0 0 1 .5-4.4A3.4 3.4 0 0 1 12 4.1a3.4 3.4 0 0 1 4.3 2.7 2.6 2.6 0 0 1 .5 4.4"/>'),
+  "סלטים":       SVG('<path d="M3.6 12h16.8a8.4 8.4 0 0 1-16.8 0Z"/><path d="M9.2 9.6c-1-2 .4-4.6 2.9-5.1.4 2.7-.7 4.5-2.9 5.1Z"/><path d="M13.2 9.6c1.4-1.3 3.5-1.1 4.6.2-1.5 1.4-3.3 1.5-4.6-.2Z"/>'),
+  "מרקים":       SVG('<path d="M4 11.4h16a8 8 0 0 1-16 0Z"/><path d="M3 19.4h18"/><path d="M9 7.4c0-1 .8-1.4.8-2.4M12.5 7.4c0-1 .8-1.4.8-2.4M16 7.4c0-1 .8-1.4.8-2.4"/>'),
+  "מאפים":       SVG('<path d="M4.2 10.8c0-2.4 2.1-3.9 4.5-3.9h6.6c2.4 0 4.5 1.5 4.5 3.9v3.6c0 2.3-1.9 3.6-4.2 3.6H8.4c-2.3 0-4.2-1.3-4.2-3.6v-3.6Z"/><path d="M9 7.4 7.6 17.6M12.8 7.4l-1.4 10.2M16.6 7.4l-1.4 10.2"/>'),
+  "משקאות":      SVG('<path d="M7.2 4.2h9.6l-1.2 13.9a2 2 0 0 1-2 1.8h-3.2a2 2 0 0 1-2-1.8L7.2 4.2Z"/><path d="M7.8 10.2h8.4"/>'),
+  "פסטות":       SVG('<path d="M4 11.4h16a8 8 0 0 1-16 0Z"/><path d="M8 11.2c0-3 1.7-5 4-5s4 2 4 5"/><path d="M10.6 11.2c0-2 .6-3.3 1.4-3.3s1.4 1.3 1.4 3.3"/>'),
+  "_default":    SVG('<circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="3.4"/>'),
+};
 const CAT_KEYWORDS = [
   ["קינוחים",["שוקולד","קינוח","עוגה","עוגיות","טראפלס","מתוק","קרם","גלידה"]],
   ["ארוחות בוקר",["שקשוקה","ביצים","בוקר","פנקייק","גרנולה","חביתה"]],
@@ -261,6 +409,18 @@ let overrides = {};
 let nav = {view:'home', cat:null, recipe:null};
 let pendingPages = null;
 let ocrToken = 0;
+let wakeLock = null;
+let fallbackPages = null;   // lazily loaded from recipes.json if a page image is missing
+
+/* ---------- Small persistent prefs (favourites, history, sort) ---------- */
+const LS = {
+  get(k, d){ try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; }
+             catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let favs     = LS.get('favs', []);
+let recents  = LS.get('recents', []);
+let sortMode = LS.get('sort', 'recent');
 
 /* ---------- IndexedDB ---------- */
 function openDB(){
@@ -297,7 +457,10 @@ const putOverride = ov  => tx('overrides','readwrite', s=>s.put(ov));
 
 /* ---------- Data ---------- */
 function allRecipes(){
-  const merged = BUILTIN.map(r => overrides[r.id] ? {...r, ...overrides[r.id], id:r.id, pages:r.pages, builtin:true} : r);
+  const merged = BUILTIN.map(r => {
+    const base = {...r, builtin:true};
+    return overrides[r.id] ? {...base, ...overrides[r.id], id:r.id, builtin:true} : base;
+  });
   return merged.concat(userRecipes);
 }
 function getRecipe(id){ return allRecipes().find(r=>r.id===id); }
@@ -306,18 +469,116 @@ function categories(){
   allRecipes().forEach(r=>m.set(r.category,(m.get(r.category)||0)+1));
   return [...m.entries()];
 }
+/* Built-in pages are separate cacheable files; user-added recipes carry data URIs. */
+function pagesOf(r){
+  if(r.pages && r.pages.length) return r.pages;
+  return Array.from({length: r.pageCount || 0}, (_,i)=>`pages/${r.id}-${i+1}.jpg`);
+}
+function thumbOf(r){
+  return r.thumb || (r.pages && r.pages[0]) || `pages/${r.id}-1.jpg`;
+}
+function sortRecipes(list){
+  const a = [...list];
+  if(sortMode === 'alpha')      a.sort((x,y)=>x.title.localeCompare(y.title,'he'));
+  else if(sortMode === 'time')  a.sort((x,y)=>(x.time||99999)-(y.time||99999));
+  else                          a.reverse();   // newest added first
+  return a;
+}
+
+/* ---------- Favourites & history ---------- */
+function isFav(id){ return favs.indexOf(id) !== -1; }
+function toggleFav(){
+  const id = nav.recipeId; if(!id) return;
+  favs = isFav(id) ? favs.filter(x=>x!==id) : [id].concat(favs);
+  LS.set('favs', favs);
+  updateFavBtn(id);
+}
+function updateFavBtn(id){
+  const b = document.getElementById('favBtn');
+  const on = isFav(id);
+  b.classList.toggle('on', on);
+  b.textContent = on ? '★ במועדפים' : '☆ הוסף למועדפים';
+}
+function noteCooked(id){
+  recents = [id].concat(recents.filter(x=>x!==id)).slice(0,8);
+  LS.set('recents', recents);
+}
+
+/* ---------- Screen wake lock (keeps the screen on while cooking) ---------- */
+async function requestWake(){
+  try{
+    if(!('wakeLock' in navigator)) return;
+    wakeLock = await navigator.wakeLock.request('screen');
+    document.getElementById('wakeNote').textContent = '🔆 המסך יישאר דלוק כל עוד המתכון פתוח';
+  }catch(e){ /* denied or unsupported - not critical */ }
+}
+async function releaseWake(){
+  try{ if(wakeLock){ await wakeLock.release(); } }catch(e){}
+  wakeLock = null;
+  const n = document.getElementById('wakeNote'); if(n) n.textContent = '';
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && nav.view === 'recipe' && !wakeLock) requestWake();
+});
 
 /* ---------- Views ---------- */
-function show(view, title, back){
+let suppressPush = false;
+function clickable(el, fn){
+  el.tabIndex = 0;
+  el.setAttribute('role','button');
+  el.onclick = fn;
+  el.onkeydown = e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fn(); } };
+  return el;
+}
+function show(view, title, back, state){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   document.getElementById('headerTitle').textContent = title;
   document.getElementById('backBtn').classList.toggle('show', back);
   document.getElementById('addBtn').style.display = (view==='home') ? 'block':'none';
+  if(view !== 'recipe') releaseWake();
   window.scrollTo(0,0);
+  if(state && !suppressPush){
+    try{ history.pushState(state, ''); }catch(e){}
+  }
+}
+function recipeCard(r){
+  const d = document.createElement('div');
+  d.className = 'recipe-card';
+  const f = r.time ? fmtTime(r.time) : null;
+  const badge = f ? `<div class="time-badge" aria-hidden="true"><span class="val">${f.val}</span><span class="unit">${f.unit}</span></div>` : '';
+  const star  = isFav(r.id) ? '<span class="card-fav" aria-hidden="true">★</span>' : '';
+  d.innerHTML = `${badge}<img class="thumb" src="${thumbOf(r)}" alt="" loading="lazy">` +
+    `<div class="info"><p class="title">${esc(r.title)}</p><p class="desc">${esc(r.desc||'')}</p></div>` +
+    `${star}<span class="chev" aria-hidden="true">‹</span>`;
+  return clickable(d, ()=>renderRecipe(r.id));
+}
+function miniCard(r){
+  const d = document.createElement('div');
+  d.className = 'mini';
+  d.innerHTML = `<img src="${thumbOf(r)}" alt="" loading="lazy"><div class="t">${esc(r.title)}</div>`;
+  return clickable(d, ()=>renderRecipe(r.id));
+}
+function renderStrips(){
+  const all = allRecipes();
+  const fill = (hostId, ids) => {
+    const host = document.getElementById(hostId);
+    host.innerHTML = '';
+    let n = 0;
+    ids.forEach(id=>{
+      const r = all.find(x=>x.id===id);
+      if(r){ host.appendChild(miniCard(r)); n++; }
+    });
+    return n;
+  };
+  const favN = fill('favStrip', favs);
+  const recN = fill('recentStrip', recents.filter(id=>!isFav(id)));
+  document.getElementById('favSection').style.display    = favN ? 'block' : 'none';
+  document.getElementById('recentSection').style.display = recN ? 'block' : 'none';
 }
 function renderHome(){
   nav = {view:'home'};
+  renderStrips();
   const g = document.getElementById('catGrid');
   g.innerHTML = '';
   const cats = categories();
@@ -325,26 +586,28 @@ function renderHome(){
   cats.forEach(([name,count])=>{
     const d = document.createElement('div');
     d.className = 'cat-card';
-    d.innerHTML = `<span class="emoji">${CAT_EMOJI[name]||'🍽️'}</span><div class="name">${esc(name)}</div><div class="count">${count===1?'מתכון אחד':count+' מתכונים'}</div>`;
-    d.onclick = ()=>renderCategory(name);
-    g.appendChild(d);
+    d.innerHTML = `<span class="icon">${CAT_ICON[name] || CAT_ICON._default}</span>` +
+      `<div class="name">${esc(name)}</div>` +
+      `<div class="count">${count===1 ? 'מתכון אחד' : count+' מתכונים'}</div>`;
+    g.appendChild(clickable(d, ()=>renderCategory(name)));
   });
-  show('home','ספר המתכונים של גל',false);
+  show('home','ספר המתכונים של גל',false,{v:'home'});
 }
 function renderCategory(cat){
   nav = {view:'category', cat};
   const list = document.getElementById('recipeList');
   list.innerHTML = '';
-  allRecipes().filter(r=>r.category===cat).forEach(r=>{
-    const d = document.createElement('div');
-    d.className = 'recipe-card';
-    const f = r.time ? fmtTime(r.time) : null;
-    const badge = f ? `<div class="time-badge"><span class="val">${f.val}</span><span class="unit">${f.unit}</span></div>` : '';
-    d.innerHTML = `${badge}<img class="thumb" src="${r.pages[0]}" alt=""><div class="info"><p class="title">${esc(r.title)}</p><p class="desc">${esc(r.desc)}</p></div><span class="chev">‹</span>`;
-    d.onclick = ()=>renderRecipe(r.id);
-    list.appendChild(d);
-  });
-  show('category', cat, true);
+  const items = sortRecipes(allRecipes().filter(r=>r.category===cat));
+  items.forEach(r=>list.appendChild(recipeCard(r)));
+  document.querySelectorAll('#sortChips .chip').forEach(c=>
+    c.classList.toggle('on', c.dataset.sort === sortMode));
+  show('category', cat, true, {v:'cat', c:cat});
+}
+function setSort(mode){
+  sortMode = mode; LS.set('sort', mode);
+  if(nav.view === 'category'){
+    suppressPush = true; renderCategory(nav.cat); suppressPush = false;
+  }
 }
 function renderRecipe(id){
   const r = getRecipe(id);
@@ -352,10 +615,17 @@ function renderRecipe(id){
   nav = {view:'recipe', cat:r.category, recipeId:id};
   const p = document.getElementById('recipePages');
   p.innerHTML = '';
-  r.pages.forEach(src=>{
+  const srcs = pagesOf(r);
+  srcs.forEach((src,i)=>{
+    const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
     img.src = src; img.loading = 'lazy';
-    p.appendChild(img);
+    img.alt = `${r.title} — עמוד ${i+1}`;
+    img.onclick  = ()=>openLightbox(img.src, img.alt);
+    img.onerror  = ()=>recoverPage(img, r.id, i);
+    const num = document.createElement('span');
+    num.className = 'page-num'; num.textContent = `${i+1}/${srcs.length}`;
+    w.appendChild(img); w.appendChild(num); p.appendChild(w);
   });
   const act = document.getElementById('recipeActions');
   act.innerHTML = '';
@@ -365,6 +635,8 @@ function renderRecipe(id){
     b.onclick = async ()=>{
       if(confirm('למחוק את המתכון "'+r.title+'"?')){
         await removeRecipe(r.id);
+        favs = favs.filter(x=>x!==r.id); LS.set('favs', favs);
+        recents = recents.filter(x=>x!==r.id); LS.set('recents', recents);
         await loadStores();
         if(allRecipes().some(x=>x.category===nav.cat)) renderCategory(nav.cat);
         else renderHome();
@@ -372,12 +644,97 @@ function renderRecipe(id){
     };
     act.appendChild(b);
   }
-  show('recipe', r.title, true);
+  updateFavBtn(id);
+  noteCooked(id);
+  requestWake();
+  show('recipe', r.title, true, {v:'recipe', id});
 }
+/* If a page image is missing (recipes.json changed but build.py wasn't run),
+   fall back to the base64 copy inside recipes.json. */
+async function recoverPage(img, id, i){
+  img.onerror = null;
+  try{
+    if(!fallbackPages){
+      const res = await fetch('recipes.json');
+      const arr = await res.json();
+      fallbackPages = {};
+      arr.forEach(x=>{ fallbackPages[x.id] = x.pages; });
+    }
+    const pages = fallbackPages[id];
+    if(pages && pages[i]) img.src = pages[i];
+  }catch(e){ /* nothing else we can do */ }
+}
+
+/* ---------- Search ---------- */
+function onSearch(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const results = document.getElementById('searchResults');
+  const sections = document.getElementById('homeSections');
+  document.getElementById('searchClear').classList.toggle('show', !!q);
+  if(!q){
+    results.style.display = 'none'; results.innerHTML = '';
+    sections.style.display = 'block';
+    return;
+  }
+  const hits = allRecipes().filter(r=>
+    (r.title||'').toLowerCase().includes(q) ||
+    (r.desc||'').toLowerCase().includes(q) ||
+    (r.category||'').toLowerCase().includes(q));
+  results.innerHTML = '';
+  if(!hits.length){
+    results.innerHTML = '<p class="empty">לא נמצאו מתכונים</p>';
+  }else{
+    const label = document.createElement('div');
+    label.className = 'section-label';
+    label.textContent = hits.length === 1 ? 'תוצאה אחת' : hits.length + ' תוצאות';
+    results.appendChild(label);
+    hits.forEach(r=>results.appendChild(recipeCard(r)));
+  }
+  results.style.display = 'block';
+  sections.style.display = 'none';
+}
+function clearSearch(){
+  const i = document.getElementById('searchInput');
+  i.value = ''; onSearch(); i.focus();
+}
+
+/* ---------- Lightbox ---------- */
+function openLightbox(src, alt){
+  const lb = document.getElementById('lightbox'), img = document.getElementById('lbImg');
+  img.src = src; img.alt = alt || ''; img.classList.remove('zoom');
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox(ev){
+  if(ev && ev.target && ev.target.id === 'lbImg'){
+    ev.target.classList.toggle('zoom');   // tap the page to zoom in / out
+    return;
+  }
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lbImg').src = '';
+  document.body.style.overflow = '';
+}
+
+/* ---------- Navigation (browser back / iOS swipe) ---------- */
+function applyState(s){
+  suppressPush = true;
+  if(s && s.v === 'cat' && s.c)         renderCategory(s.c);
+  else if(s && s.v === 'recipe' && s.id) renderRecipe(s.id);
+  else if(s && s.v === 'add')            openAdd();
+  else if(s && s.v === 'edit' && s.id)   { nav.recipeId = s.id; openEdit(); }
+  else                                   renderHome();
+  suppressPush = false;
+}
+window.addEventListener('popstate', e => applyState(e.state));
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(document.getElementById('lightbox').classList.contains('open')) closeLightbox();
+    else if(nav.view !== 'home') goBack();
+  }
+});
 function goBack(){
-  if(nav.view==='edit') renderRecipe(nav.recipeId);
-  else if(nav.view==='recipe') renderCategory(nav.cat);
-  else renderHome();
+  if(history.state && history.state.v && history.state.v !== 'home'){ history.back(); return; }
+  renderHome();
 }
 
 /* ---------- Category select helper ---------- */
@@ -410,7 +767,7 @@ function openEdit(){
   document.getElementById('eTime').value = r.time || '';
   fillCatSelect('eCatSelect', r.category);
   onCatSelect('eCatSelect','eNewCat');
-  show('edit','עריכת מתכון',true);
+  show('edit','עריכת מתכון',true,{v:'edit', id:r.id});
 }
 async function saveEdit(){
   const r = getRecipe(nav.recipeId);
@@ -424,7 +781,7 @@ async function saveEdit(){
   if(r.builtin) await putOverride({id:r.id, ...fields});
   else await putRecipe({...r, ...fields});
   await loadStores();
-  renderRecipe(r.id);
+  suppressPush = true; renderRecipe(r.id); suppressPush = false;
 }
 
 /* ---------- Add recipe (auto-fill) ---------- */
@@ -442,7 +799,7 @@ function openAdd(){
   fillCatSelect('catSelect');
   onCatSelect('catSelect','newCatInput');
   nav = {view:'add'};
-  show('add','הוספת מתכון',true);
+  show('add','הוספת מתכון',true,{v:'add'});
 }
 function loadScript(src){
   return new Promise((res,rej)=>{
@@ -572,34 +929,52 @@ function fmtTime(m){
 
 let builtinLoadFailed = false;
 
-/* Recipes live in recipes.json so that edits to this file (design, icons,
-   features) can never destroy the recipe data. */
-async function fetchRecipes(){
+/* Recipe data lives outside this file so that edits here (design, icons,
+   features) can never destroy it.
+   Launch fetches index.json only (~80 KB: titles, times, thumbnails).
+   Page images are separate files, loaded when a recipe is actually opened. */
+async function fetchIndex(){
   try{
-    const r = await fetch('recipes.json', {cache:'no-cache'});
+    const r = await fetch('index.json', {cache:'no-cache'});
     if(!r.ok) throw new Error('HTTP ' + r.status);
     return await r.json();
   }catch(e){
-    // offline or revalidation failed - fall back to whatever is cached
-    const r2 = await fetch('recipes.json', {cache:'force-cache'});
-    if(!r2.ok) throw new Error('HTTP ' + r2.status);
+    const r2 = await fetch('index.json', {cache:'force-cache'});   // offline
+    if(!r2.ok) throw e;
     return await r2.json();
   }
 }
+/* Legacy path: the full 14 MB file, only if index.json is unavailable. */
+async function fetchRecipesFull(){
+  const r = await fetch('recipes.json', {cache:'force-cache'});
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return await r.json();
+}
 
 (async function boot(){
+  document.getElementById('catGrid').innerHTML =
+    '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
   try{
-    BUILTIN = await fetchRecipes();
+    BUILTIN = await fetchIndex();
   }catch(e){
-    BUILTIN = [];
-    builtinLoadFailed = true;
-    console.error('recipes.json load failed:', e);
+    try{
+      BUILTIN = await fetchRecipesFull();
+    }catch(e2){
+      BUILTIN = [];
+      builtinLoadFailed = true;
+      console.error('recipe load failed:', e, e2);
+    }
   }
   await loadStores();
+  try{ history.replaceState({v:'home'}, ''); }catch(e){}
   renderHome();
+  document.getElementById('searchInput').addEventListener('input', onSearch);
   if(builtinLoadFailed && !userRecipes.length){
     document.getElementById('catGrid').innerHTML =
       '<p class="empty">שגיאה בטעינת המתכונים.<br>בדוק חיבור לאינטרנט ורענן את הדף.</p>';
+  }
+  if('serviceWorker' in navigator){
+    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){}
   }
 })();
 </script>

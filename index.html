@@ -234,10 +234,17 @@
     position:fixed; inset:0; z-index:60; background:rgba(30,22,16,.985);
     display:none; overflow:auto; -webkit-overflow-scrolling:touch;
   }
-  .lightbox.open{display:flex; align-items:center; justify-content:center;}
-  .lightbox.zoomed{align-items:flex-start; justify-content:flex-start;}
-  .lightbox img{display:block; max-width:100%; max-height:100%; width:auto; height:auto; margin:auto; cursor:zoom-in;}
-  .lightbox img.zoom{max-width:none; max-height:none; width:190%; height:auto; margin:0; cursor:zoom-out;}
+  .lightbox.open{display:block;}
+  /* fit mode: absolute + inset:0 + margin auto centres reliably on iOS (no flex/% bug) */
+  .lightbox img{
+    position:absolute; inset:0; margin:auto;
+    max-width:100%; max-height:100%; width:auto; height:auto; cursor:zoom-in;
+  }
+  /* zoom mode: image flows normally and the container scrolls */
+  .lightbox.zoomed img{
+    position:static; margin:0 auto; display:block;
+    max-width:none; max-height:none; width:190%; height:auto; cursor:zoom-out;
+  }
   .lb-close{
     position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; z-index:61;
     width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;

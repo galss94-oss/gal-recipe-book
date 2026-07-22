@@ -1275,7 +1275,16 @@ async function fetchRecipesFull(){
   await pullNotesAndTips();
   if(nav.view === 'recipe'){ renderTips(nav.recipeId); renderNotes(nav.recipeId); }
   if('serviceWorker' in navigator){
-    try{ await navigator.serviceWorker.register('sw.js'); }catch(e){}
+    try{
+      // reload once when a newly-activated service worker takes control
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+        if(refreshing) return; refreshing = true; location.reload();
+      });
+      const reg = await navigator.serviceWorker.register('sw.js');
+      reg.update();                                   // check for a new version on every launch
+      setInterval(()=>reg.update(), 60*60*1000);      // and hourly while open
+    }catch(e){}
   }
 })();
 </script>

@@ -231,12 +231,13 @@
 
   /* ---- Lightbox ---- */
   .lightbox{
-    position:fixed; inset:0; z-index:60; background:rgba(38,29,22,.94);
+    position:fixed; inset:0; z-index:60; background:rgba(30,22,16,.985);
     display:none; overflow:auto; -webkit-overflow-scrolling:touch;
   }
-  .lightbox.open{display:block;}
-  .lightbox img{display:block; width:100%; margin:0 auto;}
-  .lightbox img.zoom{width:220%; max-width:none;}
+  .lightbox.open{display:flex; align-items:center; justify-content:center;}
+  .lightbox.zoomed{align-items:flex-start; justify-content:flex-start;}
+  .lightbox img{display:block; max-width:100%; max-height:100%; width:auto; height:auto; margin:auto; cursor:zoom-in;}
+  .lightbox img.zoom{max-width:none; max-height:none; width:190%; height:auto; margin:0; cursor:zoom-out;}
   .lb-close{
     position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; z-index:61;
     width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
@@ -982,15 +983,28 @@ function clearSearch(){
 function openLightbox(src, alt){
   const lb = document.getElementById('lightbox'), img = document.getElementById('lbImg');
   img.src = src; img.alt = alt || ''; img.classList.remove('zoom');
+  lb.classList.remove('zoomed');
   lb.classList.add('open');
+  lb.scrollTop = 0; lb.scrollLeft = 0;
   document.body.style.overflow = 'hidden';
 }
 function closeLightbox(ev){
+  const lb = document.getElementById('lightbox');
   if(ev && ev.target && ev.target.id === 'lbImg'){
-    ev.target.classList.toggle('zoom');   // tap the page to zoom in / out
+    // tap the page to toggle read-zoom; center the tapped point when zooming in
+    const img = ev.target;
+    const zoomingIn = !img.classList.contains('zoom');
+    img.classList.toggle('zoom');
+    lb.classList.toggle('zoomed', zoomingIn);
+    if(zoomingIn){
+      requestAnimationFrame(()=>{
+        lb.scrollLeft = (img.scrollWidth - lb.clientWidth) * (ev.offsetX / img.clientWidth || 0.5);
+        lb.scrollTop  = Math.max(0, (img.scrollHeight - lb.clientHeight) / 2);
+      });
+    }else{ lb.scrollTop = 0; lb.scrollLeft = 0; }
     return;
   }
-  document.getElementById('lightbox').classList.remove('open');
+  lb.classList.remove('open','zoomed');
   document.getElementById('lbImg').src = '';
   document.body.style.overflow = '';
 }

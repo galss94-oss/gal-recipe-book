@@ -3,10 +3,10 @@
    - page images + icons:    cache first                     -> instant and available offline
    - recipes.json (14 MB):   never cached, it is only a fallback path
    Bump VERSION whenever the shell changes. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'gal-recipes-' + VERSION;
 const SHELL = [
-  './', './index.html', './index.json', './manifest.json',
+  './', './index.html', './index.json', './tips.json', './manifest.json',
   './icon-32.png', './icon-180.png', './icon-192.png', './icon-512.png'
 ];
 
@@ -31,8 +31,9 @@ self.addEventListener('fetch', e => {
   if(req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  if(url.origin !== self.location.origin) return;          // CDN scripts: leave alone
+  if(url.origin !== self.location.origin) return;          // CDN scripts + GitHub API: leave alone
   if(url.pathname.endsWith('recipes.json')) return;        // too big to cache
+  if(url.pathname.endsWith('notes.json')) return;          // user data, never cache
 
   const isAsset = /\.(jpg|jpeg|png|svg|webp)$/i.test(url.pathname);
 

@@ -266,6 +266,62 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important; animation:none !important;}
   }
+
+  /* ---- Tips (from Claude, synthesised from your notes) ---- */
+  .tips-box{
+    background:linear-gradient(180deg,#fbf3e4,#f7ecd8);
+    border:1.5px solid var(--accent2); border-radius:16px;
+    padding:16px 18px; margin:0 0 16px; box-shadow:var(--shadow);
+  }
+  .tips-box h3{
+    margin:0 0 8px; font-size:15px; font-weight:800; color:var(--accent);
+    display:flex; align-items:center; gap:7px;
+  }
+  .tips-box .body{font-size:14.5px; line-height:1.7; color:var(--ink); white-space:pre-wrap;}
+  .tips-box .by{font-size:11.5px; color:var(--muted); margin-top:8px;}
+
+  /* ---- Notes (yours) ---- */
+  .notes-box{
+    background:var(--card); border:1.5px dashed var(--frame); border-radius:16px;
+    padding:16px; margin:14px 0 4px;
+  }
+  .notes-box h3{margin:0 0 10px; font-size:15px; font-weight:800; color:#5b3a1e;}
+  .note-item{
+    background:#fffdf8; border:1px solid var(--line); border-radius:11px;
+    padding:9px 12px; margin-bottom:8px; font-size:14px; line-height:1.55; position:relative;
+  }
+  .note-item .meta{font-size:11px; color:var(--muted); margin-top:4px;}
+  .note-item .rm{
+    position:absolute; top:6px; left:8px; border:none; background:none; color:#b03a2e;
+    font-size:15px; cursor:pointer; padding:2px 6px; font-family:inherit;
+  }
+  .note-input{
+    width:100%; min-height:64px; padding:11px; border:1px solid var(--line);
+    border-radius:12px; font-size:16px; font-family:inherit; background:#fffdf8;
+    color:var(--ink); resize:vertical; text-align:right;
+  }
+  .note-row{display:flex; gap:10px; align-items:center; margin-top:10px;}
+  .note-save{
+    border:none; border-radius:12px; padding:10px 18px; font-family:inherit;
+    background:linear-gradient(160deg,var(--accent2),var(--accent)); color:#fff;
+    font-size:15px; font-weight:800; cursor:pointer;
+  }
+  .note-save:disabled{opacity:.5;}
+  .sync-status{font-size:12px; color:var(--muted);}
+  .sync-status.err{color:#b03a2e;}
+  .sync-status.ok{color:#3f7d3a;}
+
+  /* ---- Settings / gear ---- */
+  .gear-btn{
+    border:1px solid var(--line); background:var(--card); color:var(--accent);
+    width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:17px;
+    display:none; align-items:center; justify-content:center; box-shadow:var(--shadow);
+  }
+  .gear-btn.show{display:flex;}
+  .set-hint{font-size:12.5px; color:var(--muted); line-height:1.7; margin:6px 0 0;}
+  .set-hint a{color:var(--accent); font-weight:700;}
+  .set-ok{color:#3f7d3a; font-weight:700;}
+  .set-err{color:#b03a2e; font-weight:700;}
 </style>
 </head>
 <body>
@@ -273,6 +329,7 @@
 <header>
   <button class="back-btn" id="backBtn" onclick="goBack()">&#8594; חזרה</button>
   <h1 id="headerTitle">ספר המתכונים של גל</h1>
+  <button class="gear-btn show" id="gearBtn" onclick="openSettings()" aria-label="הגדרות סנכרון">⚙︎</button>
 </header>
 
 <main>
@@ -322,12 +379,47 @@
   <!-- RECIPE -->
   <section class="view" id="view-recipe">
     <p class="wake-note" id="wakeNote"></p>
+    <div id="tipsBox"></div>
     <div class="pages" id="recipePages"></div>
     <div class="recipe-actions">
       <button class="fav-btn" id="favBtn" onclick="toggleFav()"></button>
+      <button class="edit-btn" onclick="shareRecipe()">🔗 שיתוף</button>
       <button class="edit-btn" onclick="openEdit()">✏️ עריכת פרטים</button>
     </div>
+    <div class="notes-box">
+      <h3>📝 ההערות שלי</h3>
+      <div id="notesList"></div>
+      <textarea class="note-input" id="noteInput" placeholder="מה שינית? מה עבד? (למשל: הכפלתי שום, 5 דק' יותר בתנור)" aria-label="הערה חדשה"></textarea>
+      <div class="note-row">
+        <button class="note-save" id="noteSave" onclick="addNote()">שמור הערה</button>
+        <span class="sync-status" id="syncStatus"></span>
+      </div>
+    </div>
     <div id="recipeActions"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="form-card">
+      <label>GitHub Token (fine-grained)</label>
+      <input type="text" id="ghTokenInput" placeholder="github_pat_..." autocomplete="off" dir="ltr">
+      <label>מאגר (owner/repo)</label>
+      <input type="text" id="ghRepoInput" dir="ltr">
+      <div class="note-row">
+        <button class="primary-btn" style="margin-top:0" onclick="saveSettings()">שמור</button>
+        <button class="edit-btn" onclick="testSettings()">בדוק חיבור</button>
+        <span id="setStatus" style="font-size:13px"></span>
+      </div>
+      <p class="set-hint">
+        סנכרון ההערות בין כל המכשירים דורש טוקן אישי של GitHub עם הרשאת
+        <b>Contents: Read and write</b> על המאגר הזה בלבד.<br>
+        יוצרים אותו כאן:
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained token ↗</a>
+        ומדביקים למעלה.<br>
+        ⚠️ הטוקן נשמר בדפדפן של המכשיר הזה בלבד. השתמש בטוקן מצומצם למאגר אחד.
+        ללא טוקן — ההערות עדיין נשמרות במכשיר, רק לא מסתנכרנות.
+      </p>
+    </div>
   </section>
 
   <!-- ADD -->
@@ -422,14 +514,20 @@ let favs     = LS.get('favs', []);
 let recents  = LS.get('recents', []);
 let sortMode = LS.get('sort', 'recent');
 
+let notesMap = {};   // {recipeId: [{id,text,ts}]}
+let tipsMap  = {};   // {recipeId: {text, ts}}   written by the daily task
+const ghToken = () => LS.get('ghToken', '');
+const ghRepo  = () => LS.get('ghRepo', 'galss94-oss/gal-recipe-book');
+
 /* ---------- IndexedDB ---------- */
 function openDB(){
   return new Promise((res,rej)=>{
-    const r = indexedDB.open('gal-recipes',2);
+    const r = indexedDB.open('gal-recipes',3);
     r.onupgradeneeded = e => {
       const db = e.target.result;
       if(!db.objectStoreNames.contains('recipes')) db.createObjectStore('recipes',{keyPath:'id'});
       if(!db.objectStoreNames.contains('overrides')) db.createObjectStore('overrides',{keyPath:'id'});
+      if(!db.objectStoreNames.contains('notes')) db.createObjectStore('notes',{keyPath:'id'});
     };
     r.onsuccess = e => res(e.target.result);
     r.onerror = () => rej(r.error);
@@ -449,11 +547,15 @@ async function loadStores(){
     const ovArr = (await tx('overrides','readonly', s=>s.getAll())) || [];
     overrides = {};
     ovArr.forEach(o=>overrides[o.id]=o);
-  }catch(e){ userRecipes = []; overrides = {}; }
+    const noteRows = (await tx('notes','readonly', s=>s.getAll())) || [];
+    notesMap = {};
+    noteRows.forEach(row=>{ notesMap[row.id] = row.list || []; });
+  }catch(e){ userRecipes = []; overrides = {}; notesMap = {}; }
 }
 const putRecipe   = rec => tx('recipes','readwrite', s=>s.put(rec));
 const removeRecipe= id  => tx('recipes','readwrite', s=>s.delete(id));
 const putOverride = ov  => tx('overrides','readwrite', s=>s.put(ov));
+const saveNotesLocal = (rid)=> tx('notes','readwrite', s=>s.put({id:rid, list:notesMap[rid]||[]}));
 
 /* ---------- Data ---------- */
 function allRecipes(){
@@ -536,6 +638,7 @@ function show(view, title, back, state){
   document.getElementById('headerTitle').textContent = title;
   document.getElementById('backBtn').classList.toggle('show', back);
   document.getElementById('addBtn').style.display = (view==='home') ? 'block':'none';
+  document.getElementById('gearBtn').classList.toggle('show', view==='home');
   if(view !== 'recipe') releaseWake();
   window.scrollTo(0,0);
   if(state && !suppressPush){
@@ -645,9 +748,175 @@ function renderRecipe(id){
     act.appendChild(b);
   }
   updateFavBtn(id);
+  renderTips(id);
+  renderNotes(id);
+  document.getElementById('syncStatus').textContent = '';
+  document.getElementById('noteInput').value = '';
   noteCooked(id);
   requestWake();
   show('recipe', r.title, true, {v:'recipe', id});
+}
+
+/* ---------- Tips (read-only, from the daily task) ---------- */
+function renderTips(id){
+  const box = document.getElementById('tipsBox');
+  const t = tipsMap[id];
+  if(t && t.text){
+    const d = new Date(t.ts||Date.now());
+    box.innerHTML = `<div class="tips-box"><h3>✨ שיפורים ותובנות</h3>` +
+      `<div class="body">${esc(t.text)}</div>` +
+      `<div class="by">מאת קלוד · על סמך ההערות שלך · עודכן ${d.toLocaleDateString('he-IL')}</div></div>`;
+  }else{
+    box.innerHTML = '';
+  }
+}
+
+/* ---------- Notes (yours) ---------- */
+function renderNotes(id){
+  const host = document.getElementById('notesList');
+  host.innerHTML = '';
+  const list = notesMap[id] || [];
+  list.slice().reverse().forEach(n=>{
+    const d = document.createElement('div');
+    d.className = 'note-item';
+    const when = new Date(n.ts).toLocaleDateString('he-IL');
+    d.innerHTML = `<button class="rm" aria-label="מחק הערה" title="מחק">✕</button>` +
+      `<div>${esc(n.text)}</div><div class="meta">${when}</div>`;
+    d.querySelector('.rm').onclick = ()=>removeNote(id, n.id);
+    host.appendChild(d);
+  });
+}
+function setSync(state){
+  const el = document.getElementById('syncStatus');
+  el.className = 'sync-status' + (state==='error'?' err':(state==='synced'?' ok':''));
+  el.textContent = state==='saving' ? 'שומר...' :
+                   state==='synced' ? 'סונכרן ✓' :
+                   state==='local'  ? 'נשמר במכשיר · הגדר סנכרון ⚙︎' :
+                   state==='error'  ? 'נשמר במכשיר · הסנכרון נכשל' : '';
+}
+async function addNote(){
+  const ta = document.getElementById('noteInput');
+  const text = ta.value.trim();
+  if(!text) return;
+  const id = nav.recipeId;
+  const note = {id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, ts: Date.now()};
+  notesMap[id] = (notesMap[id]||[]).concat(note);
+  ta.value = '';
+  await saveNotesLocal(id);
+  renderNotes(id);
+  await pushAfterChange(id);
+}
+async function removeNote(recipeId, noteId){
+  notesMap[recipeId] = (notesMap[recipeId]||[]).filter(n=>n.id!==noteId);
+  await saveNotesLocal(recipeId);
+  renderNotes(recipeId);
+  await pushAfterChange(recipeId);
+}
+async function pushAfterChange(id){
+  if(!ghToken()){ setSync('local'); return; }
+  setSync('saving');
+  try{ await syncNotes(); setSync('synced'); }
+  catch(e){ console.error('note sync failed', e); setSync('error'); }
+}
+
+/* ---------- GitHub sync (notes.json) ---------- */
+function b64utf8(str){ return btoa(unescape(encodeURIComponent(str))); }
+function fromB64utf8(b){ return decodeURIComponent(escape(atob((b||'').replace(/\n/g,'')))); }
+function ghHeaders(){
+  return {'Authorization':'Bearer '+ghToken(), 'Accept':'application/vnd.github+json'};
+}
+async function ghGetFile(path){
+  const [owner,repo] = ghRepo().split('/');
+  const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+    {headers: ghHeaders(), cache:'no-store'});
+  if(r.status===404) return {sha:null, data:null};
+  if(!r.ok) throw new Error('GitHub '+r.status);
+  const j = await r.json();
+  return {sha: j.sha, data: JSON.parse(fromB64utf8(j.content))};
+}
+async function ghPutFile(path, obj, sha, msg){
+  const [owner,repo] = ghRepo().split('/');
+  const body = {message: msg, content: b64utf8(JSON.stringify(obj, null, 1))};
+  if(sha) body.sha = sha;
+  const r = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,
+    {method:'PUT', headers: ghHeaders(), body: JSON.stringify(body)});
+  if(!r.ok) throw new Error('GitHub '+r.status);
+  return r.json();
+}
+/* Pull remote, union in anything we're missing, then push our view back. */
+async function syncNotes(){
+  const {sha, data} = await ghGetFile('notes.json');
+  const remote = data || {};
+  Object.keys(remote).forEach(rid=>{
+    const seen = new Set((notesMap[rid]||[]).map(n=>n.id));
+    const extra = (remote[rid]||[]).filter(n=>!seen.has(n.id));
+    if(extra.length){ notesMap[rid] = (notesMap[rid]||[]).concat(extra); }
+  });
+  // persist any newly merged notes locally
+  await Promise.all(Object.keys(notesMap).map(rid=>saveNotesLocal(rid)));
+  const payload = {};
+  Object.keys(notesMap).forEach(rid=>{ if((notesMap[rid]||[]).length) payload[rid]=notesMap[rid]; });
+  await ghPutFile('notes.json', payload, sha, 'Update cooking notes');
+}
+async function pullNotesAndTips(){
+  // tips: public file, no token needed
+  try{
+    const r = await fetch('tips.json', {cache:'no-cache'});
+    if(r.ok) tipsMap = await r.json();
+  }catch(e){}
+  // notes: merge remote into local if a token is set
+  if(ghToken()){
+    try{
+      const {data} = await ghGetFile('notes.json');
+      const remote = data || {};
+      let changed = false;
+      Object.keys(remote).forEach(rid=>{
+        const seen = new Set((notesMap[rid]||[]).map(n=>n.id));
+        const extra = (remote[rid]||[]).filter(n=>!seen.has(n.id));
+        if(extra.length){ notesMap[rid] = (notesMap[rid]||[]).concat(extra); changed = true; }
+      });
+      if(changed) await Promise.all(Object.keys(notesMap).map(rid=>saveNotesLocal(rid)));
+    }catch(e){ console.error('notes pull failed', e); }
+  }
+}
+
+/* ---------- Settings ---------- */
+function openSettings(){
+  document.getElementById('ghTokenInput').value = ghToken();
+  document.getElementById('ghRepoInput').value = ghRepo();
+  document.getElementById('setStatus').textContent = '';
+  nav = {view:'settings'};
+  show('settings','הגדרות סנכרון',true,{v:'settings'});
+}
+function saveSettings(){
+  LS.set('ghToken', document.getElementById('ghTokenInput').value.trim());
+  LS.set('ghRepo', (document.getElementById('ghRepoInput').value.trim() || 'galss94-oss/gal-recipe-book'));
+  const s = document.getElementById('setStatus');
+  s.className = 'set-ok'; s.textContent = 'נשמר ✓';
+}
+async function testSettings(){
+  saveSettings();
+  const s = document.getElementById('setStatus');
+  s.className = ''; s.textContent = 'בודק...';
+  try{
+    await ghGetFile('index.json');   // any repo read proves the token works
+    s.className = 'set-ok'; s.textContent = 'החיבור תקין ✓';
+  }catch(e){
+    s.className = 'set-err'; s.textContent = 'נכשל: בדוק את הטוקן וההרשאות';
+  }
+}
+
+/* ---------- Share ---------- */
+async function shareRecipe(){
+  const id = nav.recipeId; if(!id) return;
+  const r = getRecipe(id);
+  const url = location.origin + location.pathname + '#' + id;
+  const title = r ? r.title : 'מתכון';
+  try{
+    if(navigator.share){ await navigator.share({title, text:title, url}); return; }
+    await navigator.clipboard.writeText(url);
+    alert('הקישור הועתק:\n' + url);
+  }catch(e){ /* user cancelled share */ }
 }
 /* If a page image is missing (recipes.json changed but build.py wasn't run),
    fall back to the base64 copy inside recipes.json. */
@@ -722,6 +991,7 @@ function applyState(s){
   else if(s && s.v === 'recipe' && s.id) renderRecipe(s.id);
   else if(s && s.v === 'add')            openAdd();
   else if(s && s.v === 'edit' && s.id)   { nav.recipeId = s.id; openEdit(); }
+  else if(s && s.v === 'settings')       openSettings();
   else                                   renderHome();
   suppressPush = false;
 }
@@ -973,6 +1243,12 @@ async function fetchRecipesFull(){
     document.getElementById('catGrid').innerHTML =
       '<p class="empty">שגיאה בטעינת המתכונים.<br>בדוק חיבור לאינטרנט ורענן את הדף.</p>';
   }
+  // shareable deep link: #<recipeId> opens that recipe
+  const hashId = (location.hash || '').replace(/^#/, '');
+  if(hashId && getRecipe(hashId)) renderRecipe(hashId);
+  // pull tips (always) and notes (if a token is set), then refresh the open recipe
+  await pullNotesAndTips();
+  if(nav.view === 'recipe'){ renderTips(nav.recipeId); renderNotes(nav.recipeId); }
   if('serviceWorker' in navigator){
     try{ await navigator.serviceWorker.register('sw.js'); }catch(e){}
   }

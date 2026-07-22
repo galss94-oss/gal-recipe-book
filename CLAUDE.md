@@ -14,6 +14,7 @@ rules, update this file in the same commit.
 | **"Upload recipes"** | The content: adding recipes from NotebookLM PDFs | `recipes.json` (then run `build.py`) |
 
 Generated, never hand-edited: `index.json`, `pages/*.jpg`.
+Notes/tips data: `notes.json` (written by the app), `tips.json` (written by the daily task).
 
 ---
 
@@ -54,6 +55,25 @@ Launch payload went from 14 MB to ~80 KB. If a page image 404s, the app silently
 back to the base64 copy in `recipes.json`, so a forgotten build degrades rather than
 breaks — but a recipe added to `recipes.json` **will not appear at all** until
 `build.py` runs, because it won't be in `index.json`.
+
+### Cooking notes → tips (added 2026-07-19)
+
+Gal can write personal notes on any recipe ("doubled the garlic, +5 min"). The loop:
+
+* The **app** saves notes locally (IndexedDB) and, if a GitHub token is set in the app's
+  ⚙︎ settings, PUSHes them to **`notes.json`** via the GitHub Contents API
+  (`{ "<recipeId>": [ {id,text,ts}, ... ] }`). The token is the user's own fine-grained
+  PAT, stored only in that device's browser — never in the repo.
+* A **daily scheduled task** ("gal-recipe-tips") reads `notes.json`, and for each recipe
+  with notes writes a concise Hebrew "שיפורים ותובנות" summary into **`tips.json`**
+  (`{ "<recipeId>": {text, ts} }`), then commits + pushes. Style = KITCHEN_MENTOR.md.
+* The **app** fetches `tips.json` on launch and shows that block above the recipe images.
+
+`tips.json` must stay valid JSON and is small — safe to edit programmatically. The task
+must never touch `recipes.json`, `index.json`, `pages/`, or `index.html`. Notes are
+*input*, tips are *output*; the recipe images themselves are never modified (if a note
+implies a real method change, the task may also draft a NotebookLM prompt for Gal, but
+does not regenerate anything itself).
 
 ---
 

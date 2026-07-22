@@ -329,6 +329,7 @@
 <header>
   <button class="back-btn" id="backBtn" onclick="goBack()">&#8594; חזרה</button>
   <h1 id="headerTitle">ספר המתכונים של גל</h1>
+  <button class="gear-btn show" id="shareBookBtn" onclick="shareBook()" aria-label="שיתוף ספר המתכונים">🔗</button>
   <button class="gear-btn show" id="gearBtn" onclick="openSettings()" aria-label="הגדרות סנכרון">⚙︎</button>
 </header>
 
@@ -639,6 +640,7 @@ function show(view, title, back, state){
   document.getElementById('backBtn').classList.toggle('show', back);
   document.getElementById('addBtn').style.display = (view==='home') ? 'block':'none';
   document.getElementById('gearBtn').classList.toggle('show', view==='home');
+  document.getElementById('shareBookBtn').classList.toggle('show', view==='home');
   if(view !== 'recipe') releaseWake();
   window.scrollTo(0,0);
   if(state && !suppressPush){
@@ -907,6 +909,15 @@ async function testSettings(){
 }
 
 /* ---------- Share ---------- */
+async function shareBook(){
+  const url = location.origin + location.pathname;
+  const title = 'ספר המתכונים של גל';
+  try{
+    if(navigator.share){ await navigator.share({title, text:'ספר המתכונים של גל 🍳', url}); return; }
+    await navigator.clipboard.writeText(url);
+    alert('הקישור לספר המתכונים הועתק:\n' + url);
+  }catch(e){ /* user cancelled */ }
+}
 async function shareRecipe(){
   const id = nav.recipeId; if(!id) return;
   const r = getRecipe(id);

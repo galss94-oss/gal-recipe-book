@@ -3,11 +3,12 @@
    - page images + icons:    cache first                     -> instant and available offline
    - recipes.json (14 MB):   never cached, it is only a fallback path
    Bump VERSION whenever the shell changes. */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'gal-recipes-' + VERSION;
 const SHELL = [
   './', './index.html', './index.json', './tips.json', './manifest.json',
-  './icon-32.png', './icon-180.png', './icon-192.png', './icon-512.png'
+  './icon-32.png', './icon-180.png', './icon-192.png', './icon-512.png',
+  './icon-maskable-192.png', './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {

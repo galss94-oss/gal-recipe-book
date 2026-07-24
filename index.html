@@ -221,7 +221,9 @@
 
   /* ---- Recipe pages ---- */
   .page-wrap{position:relative; margin-bottom:14px;}
-  .page-wrap img{margin:0 !important; cursor:zoom-in;}
+  /* aspect-ratio gives images real size before they load: lazy-loading can trigger
+     and the layout doesn't jump. Corrected automatically once the file arrives. */
+  .page-wrap img{margin:0 !important; cursor:zoom-in; aspect-ratio:1200/670; object-fit:contain; background:var(--accent-soft);}
   .page-num{
     position:absolute; bottom:10px; left:10px;
     background:rgba(66,51,42,.72); color:#fff; font-size:12px; font-weight:700;
@@ -330,9 +332,49 @@
   .set-hint a{color:var(--accent); font-weight:700;}
   .set-ok{color:#3f7d3a; font-weight:700;}
   .set-err{color:#b03a2e; font-weight:700;}
+
+  /* ---- Splash (branded loading screen) ---- */
+  #splash{
+    position:fixed; inset:0; z-index:100;
+    background:linear-gradient(180deg,#f9f3e6 0%, #efe4d0 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px; opacity:1; transition:opacity .4s ease;
+  }
+  #splash.hide{opacity:0; pointer-events:none;}
+  #splash .logo{
+    width:104px; height:104px; border-radius:26px;
+    border:3px solid var(--frame); box-shadow:0 6px 22px rgba(66,51,42,.18);
+    animation:splashIn .5s ease;
+  }
+  #splash .name{
+    font-size:24px; font-weight:800; color:#5b3a1e; letter-spacing:.3px;
+    animation:splashIn .6s ease;
+  }
+  #splash .orn2{color:var(--accent2); font-size:13px; letter-spacing:6px;}
+  @keyframes splashIn{from{opacity:0; transform:translateY(8px) scale(.96)}to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    #splash{transition:none;} #splash .logo,#splash .name{animation:none;}
+  }
+
+  /* ---- Hero logo ---- */
+  .hero-logo{
+    width:74px; height:74px; border-radius:50%;
+    border:2.5px solid var(--frame); box-shadow:var(--shadow);
+    margin-bottom:8px; background:var(--accent-soft);
+  }
 </style>
 </head>
 <body>
+
+<div id="splash" aria-hidden="true">
+  <img class="logo" src="icon-192.png" alt="">
+  <div class="name">המתכונים של גל</div>
+  <div class="orn2">✦ ❧ ✦</div>
+</div>
+<script>
+  /* failsafe: never trap the user behind the splash */
+  setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.classList.add('hide'); }, 3000);
+</script>
 
 <header>
   <button class="back-btn" id="backBtn" onclick="goBack()">&#8594; חזרה</button>
@@ -345,7 +387,7 @@
   <!-- HOME -->
   <section class="view active" id="view-home">
     <div class="hero">
-      <div class="orn">✦ ❧ ✦</div>
+      <img class="hero-logo" src="icon-192.png" alt="">
       <h2>ספר המתכונים של גל</h2>
       <p class="tag">מדריכים קולינריים מצוירים · צעד אחר צעד</p>
       <div class="search-wrap">
@@ -732,10 +774,12 @@ function renderRecipe(id){
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
-    img.src = src; img.loading = 'lazy';
+    // all pages load immediately: a recipe is ~1.5MB total, the service worker
+    // caches it, and lazy-loading proved unreliable (zero-size/background-tab bugs)
+    img.src = src;
     img.alt = `${r.title} — עמוד ${i+1}`;
     img.onclick  = ()=>openLightbox(img.src, img.alt);
-    img.onerror  = ()=>recoverPage(img, r.id, i);
+    if(src.startsWith('pages/')) img.onerror = ()=>retryPage(img, r.id, i);
     const num = document.createElement('span');
     num.className = 'page-num'; num.textContent = `${i+1}/${srcs.length}`;
     w.appendChild(img); w.appendChild(num); p.appendChild(w);
@@ -937,7 +981,13 @@ async function shareRecipe(){
     alert('הקישור הועתק:\n' + url);
   }catch(e){ /* user cancelled share */ }
 }
-/* If a page image is missing (recipes.json changed but build.py wasn't run),
+/* Transient failure (flaky network / mid-deploy): retry the same file once
+   with a cache-buster before falling back to the heavy recipes.json. */
+function retryPage(img, id, i){
+  img.onerror = ()=>recoverPage(img, id, i);
+  setTimeout(()=>{ img.src = `pages/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
+}
+/* If a page image is truly missing (recipes.json changed but build.py wasn't run),
    fall back to the base64 copy inside recipes.json. */
 async function recoverPage(img, id, i){
   img.onerror = null;
@@ -1278,6 +1328,9 @@ async function fetchRecipesFull(){
   // shareable deep link: #<recipeId> opens that recipe
   const hashId = (location.hash || '').replace(/^#/, '');
   if(hashId && getRecipe(hashId)) renderRecipe(hashId);
+  // app is ready - fade the splash
+  const splash = document.getElementById('splash');
+  if(splash){ splash.classList.add('hide'); setTimeout(()=>splash.remove(), 500); }
   // pull tips (always) and notes (if a token is set), then refresh the open recipe
   await pullNotesAndTips();
   if(nav.view === 'recipe'){ renderTips(nav.recipeId); renderNotes(nav.recipeId); }

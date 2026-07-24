@@ -372,8 +372,10 @@
   <div class="orn2">✦ ❧ ✦</div>
 </div>
 <script>
-  /* failsafe: never trap the user behind the splash */
-  setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.classList.add('hide'); }, 3000);
+  /* splash timing: shown at least SPLASH_MIN ms; failsafe so it never traps the user */
+  window.__splashT0 = Date.now();
+  window.__SPLASH_MIN = 1600;
+  setTimeout(()=>{ const s=document.getElementById('splash'); if(s) s.classList.add('hide'); }, 4000);
 </script>
 
 <header>
@@ -1328,9 +1330,13 @@ async function fetchRecipesFull(){
   // shareable deep link: #<recipeId> opens that recipe
   const hashId = (location.hash || '').replace(/^#/, '');
   if(hashId && getRecipe(hashId)) renderRecipe(hashId);
-  // app is ready - fade the splash
+  // app is ready - fade the splash, but let it play for at least __SPLASH_MIN ms
   const splash = document.getElementById('splash');
-  if(splash){ splash.classList.add('hide'); setTimeout(()=>splash.remove(), 500); }
+  if(splash){
+    const waited = Date.now() - (window.__splashT0 || 0);
+    const delay = Math.max(0, (window.__SPLASH_MIN || 1600) - waited);
+    setTimeout(()=>{ splash.classList.add('hide'); setTimeout(()=>splash.remove(), 500); }, delay);
+  }
   // pull tips (always) and notes (if a token is set), then refresh the open recipe
   await pullNotesAndTips();
   if(nav.view === 'recipe'){ renderTips(nav.recipeId); renderNotes(nav.recipeId); }

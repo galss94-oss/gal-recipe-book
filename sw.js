@@ -3,7 +3,7 @@
    - page images + icons:    cache first                     -> instant and available offline
    - recipes.json (14 MB):   never cached, it is only a fallback path
    Bump VERSION whenever the shell changes. */
-const VERSION = 'v12';
+const VERSION = 'v13';   // v13 also wipes all old caches, purging any corrupt images
 const CACHE = 'gal-recipes-' + VERSION;
 const SHELL = [
   './', './index.html', './index.json', './tips.json', './manifest.json',
@@ -39,15 +39,19 @@ self.addEventListener('fetch', e => {
   const isAsset = /\.(jpg|jpeg|png|svg|webp)$/i.test(url.pathname);
 
   if(isAsset){
-    // cache first
+    // stale-while-revalidate: serve the cache instantly, but always refresh it in
+    // the background so a corrupted or outdated cached image heals on the next view
     e.respondWith(
-      caches.match(req).then(hit => hit || fetch(req).then(res => {
-        if(res && res.ok){
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy));
-        }
-        return res;
-      }))
+      caches.match(req).then(hit => {
+        const refresh = fetch(req).then(res => {
+          if(res && res.ok){
+            const copy = res.clone();
+            caches.open(CACHE).then(c => c.put(req, copy));
+          }
+          return res;
+        }).catch(()=>hit);
+        return hit || refresh;
+      })
     );
     return;
   }

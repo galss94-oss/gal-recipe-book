@@ -35,8 +35,13 @@
     position:sticky; top:0; z-index:10;
     background:rgba(246,239,226,.9); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
     border-bottom:1px solid var(--line);
-    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    padding:calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
     display:flex; align-items:center; gap:10px; min-height:52px;
+  }
+  /* installed app on Dynamic Island iPhones: guarantee clearance under the camera
+     even if env() misreports */
+  @media (display-mode: standalone){
+    header{padding-top:max(calc(10px + env(safe-area-inset-top, 0px)), 60px);}
   }
   header h1{font-size:18px; margin:0; flex:1; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.2px;}
   .back-btn{
@@ -45,7 +50,10 @@
     display:none; align-items:center; gap:4px; font-family:inherit; box-shadow:var(--shadow);
   }
   .back-btn.show{display:flex;}
-  main{max-width:760px; margin:0 auto; padding:16px 16px 90px;}
+  main{
+    max-width:760px; margin:0 auto;
+    padding:16px max(16px, env(safe-area-inset-right, 0px)) 90px max(16px, env(safe-area-inset-left, 0px));
+  }
 
   /* ---- Hero (home) ---- */
   .hero{
@@ -134,7 +142,8 @@
   }
 
   .add-btn{
-    position:fixed; bottom:calc(20px + env(safe-area-inset-bottom)); left:20px; z-index:20;
+    position:fixed; bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+    left:max(20px, env(safe-area-inset-left, 0px)); z-index:20;
     width:58px; height:58px; border-radius:50%; border:2px solid #fff; cursor:pointer;
     background:linear-gradient(160deg, var(--accent2), var(--accent)); color:#fff; font-size:30px; line-height:1;
     box-shadow:0 5px 16px rgba(163,76,23,.45);
@@ -248,7 +257,7 @@
     max-width:none; max-height:none; width:190%; height:auto; cursor:zoom-out;
   }
   .lb-close{
-    position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; z-index:61;
+    position:fixed; top:max(calc(12px + env(safe-area-inset-top, 0px)), 14px); left:max(12px, env(safe-area-inset-left, 0px)); z-index:61;
     width:40px; height:40px; border-radius:50%; border:none; cursor:pointer;
     background:rgba(253,250,243,.92); color:var(--ink); font-size:22px; line-height:1;
     font-family:inherit;
@@ -270,8 +279,16 @@
     text-align:center; color:var(--muted); font-size:12px; margin:2px 0 10px;
   }
 
+  /* ---- Tablet / iPad ---- */
   @media (min-width:900px){
-    main{max-width:860px;}
+    main{max-width:900px;}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px;}
+    .hero h2{font-size:28px;}
+    .recipe-card .thumb{width:88px; height:88px;}
+    .mini{flex-basis:150px;}
+    .mini img{height:88px;}
+    /* recipe pages: comfortable reading width, centred */
+    .pages{max-width:840px; margin:0 auto;}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important; animation:none !important;}
@@ -773,19 +790,41 @@ function renderRecipe(id){
   const p = document.getElementById('recipePages');
   p.innerHTML = '';
   const srcs = pagesOf(r);
+  /* Progressive page loading: pages load in sequence (each starts when the
+     previous finishes), which spreads the decode work and avoids iOS's
+     blurry-tile rendering with many large images at once. An observer
+     fast-tracks pages the user scrolls toward. Native loading=lazy is not
+     used - it proved unreliable. */
+  const pageImgs = [];
+  const startLoad = i => {
+    const img = pageImgs[i];
+    if(!img || img.dataset.started) return;
+    img.dataset.started = '1';
+    img.src = img.dataset.src;
+  };
+  const io = ('IntersectionObserver' in window) ?
+    new IntersectionObserver(es => es.forEach(e=>{
+      if(e.isIntersecting) startLoad(pageImgs.indexOf(e.target));
+    }), {rootMargin:'200% 0px'}) : null;
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
-    // all pages load immediately: a recipe is ~1.5MB total, the service worker
-    // caches it, and lazy-loading proved unreliable (zero-size/background-tab bugs)
-    img.src = src;
+    img.decoding = 'async';
+    img.dataset.src = src;
     img.alt = `${r.title} — עמוד ${i+1}`;
     img.onclick  = ()=>openLightbox(img.src, img.alt);
-    if(src.startsWith('pages/')) img.onerror = ()=>retryPage(img, r.id, i);
+    const chain = ()=>setTimeout(()=>startLoad(i+1), 250);
+    img.onload = chain;
+    img.onerror = src.startsWith('pages/')
+      ? ()=>{ chain(); retryPage(img, r.id, i); }
+      : chain;
     const num = document.createElement('span');
     num.className = 'page-num'; num.textContent = `${i+1}/${srcs.length}`;
     w.appendChild(img); w.appendChild(num); p.appendChild(w);
+    pageImgs.push(img);
+    if(io) io.observe(img);
   });
+  startLoad(0); startLoad(1);   // chain covers the rest even without scrolling
   const act = document.getElementById('recipeActions');
   act.innerHTML = '';
   if(!r.builtin){

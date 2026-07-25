@@ -641,11 +641,14 @@ function categories(){
   allRecipes().forEach(r=>m.set(r.category,(m.get(r.category)||0)+1));
   return [...m.entries()];
 }
-/* Built-in pages are separate cacheable files; user-added recipes carry data URIs. */
+/* Built-in pages are separate cacheable files; user-added recipes carry data URIs.
+   Inline scrolling uses the smaller pagesv/ variants (iOS keeps every page decoded
+   in RAM and drops them when it runs out); the zoom viewer uses full resolution. */
 function pagesOf(r){
   if(r.pages && r.pages.length) return r.pages;
-  return Array.from({length: r.pageCount || 0}, (_,i)=>`pages/${r.id}-${i+1}.jpg`);
+  return Array.from({length: r.pageCount || 0}, (_,i)=>`pagesv/${r.id}-${i+1}.jpg`);
 }
+function fullPageSrc(src){ return src.replace(/^pagesv\//, 'pages/'); }
 function thumbOf(r){
   return r.thumb || (r.pages && r.pages[0]) || `pages/${r.id}-1.jpg`;
 }
@@ -796,26 +799,42 @@ function renderRecipe(id){
      fast-tracks pages the user scrolls toward. Native loading=lazy is not
      used - it proved unreliable. */
   const pageImgs = [];
+  const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   const startLoad = i => {
     const img = pageImgs[i];
-    if(!img || img.dataset.started) return;
+    if(!img || img.dataset.started === '1') return;
     img.dataset.started = '1';
     img.src = img.dataset.src;
   };
+  /* Free a page that scrolled far away. iOS counts every decoded image against a
+     hard memory budget; without this, long recipes show blank or blurry pages. */
+  const unload = i => {
+    const img = pageImgs[i];
+    if(!img || img.dataset.started !== '1') return;
+    img.dataset.started = '';
+    img.src = BLANK;
+  };
   const io = ('IntersectionObserver' in window) ?
     new IntersectionObserver(es => es.forEach(e=>{
-      if(e.isIntersecting) startLoad(pageImgs.indexOf(e.target));
-    }), {rootMargin:'200% 0px'}) : null;
+      const i = pageImgs.indexOf(e.target);
+      if(e.isIntersecting) startLoad(i);
+    }), {rootMargin:'120% 0px'}) : null;
+  /* keep only a window of pages around the viewport decoded */
+  const farIo = ('IntersectionObserver' in window) ?
+    new IntersectionObserver(es => es.forEach(e=>{
+      if(!e.isIntersecting) unload(pageImgs.indexOf(e.target));
+    }), {rootMargin:'220% 0px'}) : null;
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
     img.decoding = 'async';
     img.dataset.src = src;
     img.alt = `${r.title} — עמוד ${i+1}`;
-    img.onclick  = ()=>openLightbox(img.src, img.alt);
-    const chain = ()=>setTimeout(()=>startLoad(i+1), 250);
+    // zoom viewer always opens the full-resolution page
+    img.onclick  = ()=>openLightbox(fullPageSrc(src), img.alt);
+    const chain = ()=>setTimeout(()=>startLoad(i+1), 200);
     img.onload = chain;
-    img.onerror = src.startsWith('pages/')
+    img.onerror = src.startsWith('pagesv/')
       ? ()=>{ chain(); retryPage(img, r.id, i); }
       : chain;
     const num = document.createElement('span');
@@ -823,6 +842,7 @@ function renderRecipe(id){
     w.appendChild(img); w.appendChild(num); p.appendChild(w);
     pageImgs.push(img);
     if(io) io.observe(img);
+    if(farIo) farIo.observe(img);
   });
   startLoad(0); startLoad(1);   // chain covers the rest even without scrolling
   const act = document.getElementById('recipeActions');
@@ -1026,7 +1046,7 @@ async function shareRecipe(){
    with a cache-buster before falling back to the heavy recipes.json. */
 function retryPage(img, id, i){
   img.onerror = ()=>recoverPage(img, id, i);
-  setTimeout(()=>{ img.src = `pages/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
+  setTimeout(()=>{ img.src = `pagesv/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
 }
 /* If a page image is truly missing (recipes.json changed but build.py wasn't run),
    fall back to the base64 copy inside recipes.json. */

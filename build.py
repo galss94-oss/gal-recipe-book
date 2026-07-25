@@ -15,8 +15,11 @@ import base64, io, json, os, re, shutil, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PAGES = os.path.join(ROOT, "pages")
+VIEW = os.path.join(ROOT, "pagesv")   # smaller variants used for inline scrolling
 THUMB_W = 180
 THUMB_Q = 68
+VIEW_W = 820          # inline width: sharp on phones, ~half the decode memory
+VIEW_Q = 74
 
 try:
     from PIL import Image
@@ -41,6 +44,22 @@ def make_thumb(jpg_bytes):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
+def write_view_variant(jpg_bytes, path):
+    """Downscaled page for inline scrolling. iOS keeps every visible page decoded
+    in RAM; at full size a 10-page recipe needs ~32 MB and iOS starts dropping
+    images (blank or blurry tiles). At 820px it is under half that. The full-size
+    file is still used in the zoom viewer, where only one page is open at a time."""
+    if not HAVE_PIL:
+        with open(path, "wb") as fh:
+            fh.write(jpg_bytes)
+        return
+    im = Image.open(io.BytesIO(jpg_bytes)).convert("RGB")
+    w, h = im.size
+    if w > VIEW_W:
+        im = im.resize((VIEW_W, max(1, round(h * VIEW_W / w))), Image.LANCZOS)
+    im.save(path, "JPEG", quality=VIEW_Q, optimize=True)
+
+
 def main():
     with open(os.path.join(ROOT, "recipes.json"), encoding="utf-8") as f:
         recipes = json.load(f)
@@ -48,6 +67,7 @@ def main():
         sys.exit("recipes.json is empty - refusing to build")
 
     os.makedirs(PAGES, exist_ok=True)
+    os.makedirs(VIEW, exist_ok=True)
     written, index = set(), []
 
     for r in recipes:
@@ -62,6 +82,7 @@ def main():
             name = f"{rid}-{n}.jpg"
             with open(os.path.join(PAGES, name), "wb") as fh:
                 fh.write(raw)
+            write_view_variant(raw, os.path.join(VIEW, name))
             written.add(name)
         index.append({
             "id": rid,
@@ -74,9 +95,10 @@ def main():
         })
 
     # drop page files belonging to recipes that no longer exist
-    for name in os.listdir(PAGES):
-        if name.endswith(".jpg") and name not in written:
-            os.remove(os.path.join(PAGES, name))
+    for folder in (PAGES, VIEW):
+        for name in os.listdir(folder):
+            if name.endswith(".jpg") and name not in written:
+                os.remove(os.path.join(folder, name))
 
     with open(os.path.join(ROOT, "index.json"), "w", encoding="utf-8") as f:
         json.dump(index, f, ensure_ascii=False, separators=(",", ":"))

@@ -48,8 +48,11 @@ Before this split, the recipes were a 10 MB inline array inside `index.html`.
 
 * **`index.json`** (~80 KB) — id, title, desc, category, time, pageCount and a 180px
   thumbnail per recipe. This is the only file fetched at launch.
-* **`pages/<id>-<n>.jpg`** — one file per recipe page, loaded lazily when a recipe is
-  opened and cached by the service worker.
+* **`pages/<id>-<n>.jpg`** — full-size page (1200px). Used only by the zoom viewer.
+* **`pagesv/<id>-<n>.jpg`** — 820px variant used for inline scrolling. iOS keeps every
+  visible page decoded in RAM; at full size a 10-page recipe needed ~32 MB and iOS
+  silently dropped images (blank or blurry pages). 820px halves that. Don't switch the
+  inline view back to `pages/`.
 
 Launch payload went from 14 MB to ~80 KB. If a page image 404s, the app silently falls
 back to the base64 copy in `recipes.json`, so a forgotten build degrades rather than

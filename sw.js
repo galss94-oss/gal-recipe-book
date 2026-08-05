@@ -3,7 +3,7 @@
    - page images + icons:    cache first                     -> instant and available offline
    - recipes.json (14 MB):   never cached, it is only a fallback path
    Bump VERSION whenever the shell changes. */
-const VERSION = 'v14';   // bumping VERSION wipes old caches, purging stale images
+const VERSION = 'v15';   // bumping VERSION wipes old caches, purging stale images
 const CACHE = 'gal-recipes-' + VERSION;
 const SHELL = [
   './', './index.html', './index.json', './tips.json', './manifest.json',

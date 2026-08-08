@@ -48,11 +48,20 @@ Before this split, the recipes were a 10 MB inline array inside `index.html`.
 
 * **`index.json`** (~80 KB) — id, title, desc, category, time, pageCount and a 180px
   thumbnail per recipe. This is the only file fetched at launch.
-* **`pages/<id>-<n>.jpg`** — full-size page (1200px). Used only by the zoom viewer.
-* **`pagesv/<id>-<n>.jpg`** — 820px variant used for inline scrolling. iOS keeps every
-  visible page decoded in RAM; at full size a 10-page recipe needed ~32 MB and iOS
-  silently dropped images (blank or blurry pages). 820px halves that. Don't switch the
-  inline view back to `pages/`.
+* **`pages/<id>-<n>.jpg`** — full-size page (1200px). Used by BOTH the inline flow and
+  the zoom viewer, so a page looks identical either way.
+* **`pagesv/<id>-<n>.jpg`** — 820px variants. **Currently unused by the app**, kept as a
+  rollback lever only.
+
+**How the iOS memory limit is handled (changed 2026-08-08).** iOS counts every decoded
+image against a hard budget: 10 full-size pages is ~32 MB and iOS silently drops them
+(blank or blurry pages). This was first solved by shrinking the inline images to 820px,
+but that made the flow visibly softer than the zoom view. It is now solved by a **sliding
+window** in `renderRecipe()`: only `PAGE_WINDOW*2+1` = 5 pages are ever decoded
+(~16 MB, the same budget), the rest are set to a 1x1 blank. The `aspect-ratio` rule on
+`.page-wrap img` holds the layout still when a page is blanked. Measured peak: 16.1 MB,
+constant while scrolling a 10-page recipe. **Do not remove the window** — without it,
+full-size inline pages reintroduce the blank/blurry bug.
 
 Launch payload went from 14 MB to ~80 KB. If a page image 404s, the app silently falls
 back to the base64 copy in `recipes.json`, so a forgotten build degrades rather than

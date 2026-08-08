@@ -725,7 +725,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v16';
+const APP_VERSION = 'sw v17';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -804,13 +804,15 @@ function categories(){
   return [...m.entries()];
 }
 /* Built-in pages are separate cacheable files; user-added recipes carry data URIs.
-   Inline scrolling uses the smaller pagesv/ variants (iOS keeps every page decoded
-   in RAM and drops them when it runs out); the zoom viewer uses full resolution. */
+   Inline scrolling serves the SAME full-resolution files as the zoom viewer, so a page
+   looks identical whether you read it in the flow or tap into it. What keeps iOS from
+   running out of decode memory is the sliding window in renderRecipe(), not a smaller
+   image: only PAGE_WINDOW*2+1 pages are ever decoded at once.
+   (pagesv/ still holds 820px variants — kept as a rollback lever, see CLAUDE.md.) */
 function pagesOf(r){
   if(r.pages && r.pages.length) return r.pages;
-  return Array.from({length: r.pageCount || 0}, (_,i)=>`pagesv/${r.id}-${i+1}.jpg`);
+  return Array.from({length: r.pageCount || 0}, (_,i)=>`pages/${r.id}-${i+1}.jpg`);
 }
-function fullPageSrc(src){ return src.replace(/^pagesv\//, 'pages/'); }
 function thumbOf(r){
   return r.thumb || (r.pages && r.pages[0]) || `pages/${r.id}-1.jpg`;
 }
@@ -957,58 +959,63 @@ function renderRecipe(id){
   const p = document.getElementById('recipePages');
   p.innerHTML = '';
   const srcs = pagesOf(r);
-  /* Progressive page loading: pages load in sequence (each starts when the
-     previous finishes), which spreads the decode work and avoids iOS's
-     blurry-tile rendering with many large images at once. An observer
-     fast-tracks pages the user scrolls toward. Native loading=lazy is not
-     used - it proved unreliable. */
-  const pageImgs = [];
+  /* Sliding window of decoded pages.
+     iOS counts every decoded image against a hard memory budget: 10 full-size pages
+     is ~32 MB and iOS starts dropping them (blank or blurry pages). Rather than
+     shrinking the images — which made the flow look softer than the zoom view — we
+     keep only the pages near the one being read decoded, and blank the rest.
+     5 pages x 1200x670 is ~16 MB, the same budget the 820px variants used, at full
+     quality. The aspect-ratio rule on .page-wrap img keeps the layout from moving
+     when a page is blanked, so scrolling stays stable. */
+  const PAGE_WINDOW = 2;                     // current +/- 2  ->  5 decoded, ~16 MB
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  const pageImgs = [];
+  let currentPage = 0;
   const startLoad = i => {
     const img = pageImgs[i];
     if(!img || img.dataset.started === '1') return;
     img.dataset.started = '1';
     img.src = img.dataset.src;
   };
-  /* Free a page that scrolled far away. iOS counts every decoded image against a
-     hard memory budget; without this, long recipes show blank or blurry pages. */
   const unload = i => {
     const img = pageImgs[i];
     if(!img || img.dataset.started !== '1') return;
     img.dataset.started = '';
     img.src = BLANK;
   };
+  const applyWindow = ()=>{
+    for(let i = 0; i < pageImgs.length; i++){
+      if(Math.abs(i - currentPage) <= PAGE_WINDOW) startLoad(i);
+      else unload(i);
+    }
+  };
   const io = ('IntersectionObserver' in window) ?
-    new IntersectionObserver(es => es.forEach(e=>{
-      const i = pageImgs.indexOf(e.target);
-      if(e.isIntersecting) startLoad(i);
-    }), {rootMargin:'120% 0px'}) : null;
-  /* keep only a window of pages around the viewport decoded */
-  const farIo = ('IntersectionObserver' in window) ?
-    new IntersectionObserver(es => es.forEach(e=>{
-      if(!e.isIntersecting) unload(pageImgs.indexOf(e.target));
-    }), {rootMargin:'220% 0px'}) : null;
+    new IntersectionObserver(entries => {
+      let moved = false;
+      entries.forEach(e=>{
+        if(!e.isIntersecting) return;
+        const i = pageImgs.indexOf(e.target);
+        if(i >= 0 && i !== currentPage){ currentPage = i; moved = true; }
+      });
+      if(moved) applyWindow();
+    }, {rootMargin:'50% 0px', threshold:0.01}) : null;
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
     img.decoding = 'async';
     img.dataset.src = src;
     img.alt = `${r.title} — עמוד ${i+1}`;
-    // zoom viewer always opens the full-resolution page
-    img.onclick  = ()=>openLightbox(fullPageSrc(src), img.alt);
-    const chain = ()=>setTimeout(()=>startLoad(i+1), 200);
-    img.onload = chain;
-    img.onerror = src.startsWith('pagesv/')
-      ? ()=>{ chain(); retryPage(img, r.id, i); }
-      : chain;
+    img.onclick  = ()=>openLightbox(src, img.alt);
+    if(src.startsWith('pages/')) img.onerror = ()=>retryPage(img, r.id, i);
     const num = document.createElement('span');
     num.className = 'page-num'; num.textContent = `${i+1}/${srcs.length}`;
     w.appendChild(img); w.appendChild(num); p.appendChild(w);
     pageImgs.push(img);
     if(io) io.observe(img);
-    if(farIo) farIo.observe(img);
   });
-  startLoad(0); startLoad(1);   // chain covers the rest even without scrolling
+  applyWindow();
+  // no IntersectionObserver (very old browsers): fall back to loading everything
+  if(!io) pageImgs.forEach((_,i)=>startLoad(i));
   const act = document.getElementById('recipeActions');
   act.innerHTML = '';
   if(!r.builtin){
@@ -1218,7 +1225,7 @@ async function shareRecipe(){
    with a cache-buster before falling back to the heavy recipes.json. */
 function retryPage(img, id, i){
   img.onerror = ()=>recoverPage(img, id, i);
-  setTimeout(()=>{ img.src = `pagesv/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
+  setTimeout(()=>{ img.src = `pages/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
 }
 /* If a page image is truly missing (recipes.json changed but build.py wasn't run),
    fall back to the base64 copy inside recipes.json. */

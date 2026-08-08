@@ -57,11 +57,17 @@ Before this split, the recipes were a 10 MB inline array inside `index.html`.
 image against a hard budget: 10 full-size pages is ~32 MB and iOS silently drops them
 (blank or blurry pages). This was first solved by shrinking the inline images to 820px,
 but that made the flow visibly softer than the zoom view. It is now solved by a **sliding
-window** in `renderRecipe()`: only `PAGE_WINDOW*2+1` = 5 pages are ever decoded
-(~16 MB, the same budget), the rest are set to a 1x1 blank. The `aspect-ratio` rule on
-`.page-wrap img` holds the layout still when a page is blanked. Measured peak: 16.1 MB,
-constant while scrolling a 10-page recipe. **Do not remove the window** — without it,
-full-size inline pages reintroduce the blank/blurry bug.
+window** in `renderRecipe()`: only pages within `KEEP_MARGIN` (0.25) of a viewport
+height beyond the screen stay decoded, the rest are set to a 1x1 blank. The
+`aspect-ratio` rule on `.page-wrap img` holds the layout still when a page is blanked.
+**Do not remove the window** — without it, full-size inline pages reintroduce the
+blank/blurry bug.
+
+**The window must be measured in pixels from the viewport, never in page indexes.**
+An index-based window (`current ± 2`) shipped once and blanked pages that were still on
+screen — at phone width a page is only ~200px tall, so four or five are visible at once
+and the window could not cover them. Gal saw slides vanish and reappear while scrolling.
+Invariant to preserve: **a page whose box touches the viewport is never unloaded.**
 
 Launch payload went from 14 MB to ~80 KB. If a page image 404s, the app silently falls
 back to the base64 copy in `recipes.json`, so a forgotten build degrades rather than

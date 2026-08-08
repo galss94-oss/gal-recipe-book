@@ -78,6 +78,28 @@ must never touch `recipes.json`, `index.json`, `pages/`, or `index.html`. Notes 
 implies a real method change, the task may also draft a NotebookLM prompt for Gal, but
 does not regenerate anything itself).
 
+### Report an issue → daily triage (added 2026-08-08)
+
+A ⚑ button in the header, on every view, opens a report sheet: category buttons (one-tap
+report — text is optional), optional dictation (`he-IL`, fills the textarea only), optional
+screenshot (downscaled client-side to 1200px / JPEG 0.7). The page attaches its own context:
+page, section, device class, and a **ZOOMED flag** when `innerWidth < screen.width * 0.95`
+(a zoomed iPhone otherwise reports a narrow width and looks like an unknown small device).
+
+Reports are written by the app to **`issues.json`** (array) using the same GitHub token as
+notes; screenshots go to **`issues/<id>.jpg`**. No Google/Apps Script involved — the token
+already existed, so this needs no setup and has no public endpoint.
+
+Non-negotiables in the client (each fails silently if broken):
+* Never show success unless the write was confirmed. Never clear the text on failure.
+* Stop dictation BEFORE resetting the form, or a late result refills the box.
+* A category with no text is a valid report — the client sends `[<category label>]`.
+
+`gal-recipe-issue-triage` (daily 06:30) drains rows where `status` is `new`: views the
+screenshot, scopes to the reported device unless the defect is cross-cutting, fixes bugs
+in place, prepares features as mockups under `mockups/<issue-id>.html` and waits for Gal,
+then writes `done <date>` / `awaiting approval` back. **It never deletes rows.**
+
 ---
 
 ## Hard rules

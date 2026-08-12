@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>עמוד ריק באמצע מתכון — שלוש אפשרויות</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 3px 12px rgba(66,51,42,.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Rubik,Arial,sans-serif;
+    padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 28px);
+    font-size:16px; line-height:1.6;
+  }
+  header{margin-bottom:18px;}
+  h1{font-size:20px; margin:0 0 6px;}
+  .sub{color:var(--muted); font-size:14.5px; margin:0;}
+  .why{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin:16px 0 22px; box-shadow:var(--shadow);
+  }
+  .why b{color:var(--accent);}
+  .why p{margin:0 0 8px;}
+  .why p:last-child{margin:0;}
+
+  .opt{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:14px; margin-bottom:18px; box-shadow:var(--shadow);
+  }
+  .opt h2{font-size:17px; margin:0 0 4px; color:var(--accent);}
+  .opt .note{font-size:14.5px; color:var(--muted); margin:0 0 12px;}
+  .stat{
+    display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;
+  }
+  .chip{
+    background:var(--accent-soft); border:1px solid var(--frame); color:var(--ink);
+    border-radius:12px; padding:4px 10px; font-size:13.5px; font-weight:700;
+  }
+  .chip.warn{background:#fff; color:var(--accent);}
+
+  .phone{
+    border:1px solid var(--frame); border-radius:14px; overflow:hidden;
+    background:var(--bg2); padding:8px;
+  }
+  .phone .pg{
+    position:relative; margin-bottom:10px; border-radius:10px; overflow:hidden;
+    background:var(--accent-soft); border:1px solid var(--line);
+  }
+  .phone .pg:last-child{margin-bottom:0;}
+  .phone img{display:block; width:100%; height:auto;}
+  .num{
+    position:absolute; bottom:8px; left:8px;
+    background:rgba(66,51,42,.72); color:#fff; font-size:12px; font-weight:700;
+    padding:3px 9px; border-radius:12px;
+  }
+  .soft img{filter:blur(.35px);}
+
+  .tall .pg img{width:100%;}
+  .tall .pg{margin-bottom:14px;}
+
+  .vote{
+    display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+  }
+  .vote span{
+    min-height:44px; display:inline-flex; align-items:center; justify-content:center;
+    padding:0 16px; border-radius:22px; border:1px solid var(--frame);
+    background:var(--card); color:var(--accent); font-weight:700; font-size:14.5px;
+  }
+  footer{color:var(--muted); font-size:14px; margin-top:22px;}
+  .legend{font-size:13.5px; color:var(--muted); margin:8px 0 0;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>עמוד 5 יצא חצי מצויר</h1>
+  <p class="sub">דיווח מ־12 באוגוסט, קציצות ברוטב עגבניות, אייפון 402 פיקסל</p>
+</header>
+
+<div class="why">
+  <p><b>מה קורה בפועל.</b> ברוחב טלפון כל עמוד נפרס לגובה 207 פיקסל בלבד, ולכן
+  ארבעה עמודים נמצאים על המסך בו זמנית וחמישה נטענים יחד. חמישה עמודים בגודל מלא
+  הם כ־15 מגה־בייט של תמונה מפוענחת, ושם iOS מפסיק באמצע ומצייר חצי עמוד.</p>
+  <p><b>למה זה לא תוקן מיד.</b> ה"חלון" שמשחרר עמודים רחוקים כבר קיים, אבל הוא מודד
+  מרחק ולא כמות — ברוחב טלפון כמעט כל המתכון נכנס לתוכו, אז הוא לא מגן על כלום.
+  כל פתרון אמיתי משנה איך המתכון נראה, ולכן זו החלטה שלך.</p>
+</div>
+
+<div class="opt">
+  <h2>א׳ — להשאיר כמו היום</h2>
+  <p class="note">חד לגמרי, אבל העמוד הריק יחזור מדי פעם במתכונים ארוכים.</p>
+  <div class="stat">
+    <span class="chip">1200 פיקסל</span>
+    <span class="chip warn">כ־15MB בזיכרון</span>
+    <span class="chip warn">עמוד ריק חוזר</span>
+  </div>
+  <div class="phone">
+    <div class="pg"><img src="../pagesv/b2-4.jpg" alt="עמוד 4"><span class="num">4/6</span></div>
+    <div class="pg"><img src="../pagesv/b2-5.jpg" alt="עמוד 5"><span class="num">5/6</span></div>
+    <div class="pg"><img src="../pagesv/b2-6.jpg" alt="עמוד 6"><span class="num">6/6</span></div>
+  </div>
+  <p class="legend">כך הזרימה נראית היום — שלושה עמודים ומשהו על מסך אחד.</p>
+</div>
+
+<div class="opt">
+  <h2>ב׳ — תמונות קטנות יותר בזרימה</h2>
+  <p class="note">820 פיקסל בזרימה, 1200 בזום. חוצה את הזיכרון, אבל זה מה שכבר
+  ניסינו ואמרת שנראה רך מדי מול הזום.</p>
+  <div class="stat">
+    <span class="chip">820 פיקסל</span>
+    <span class="chip">כ־6MB בזיכרון</span>
+    <span class="chip warn">קצת רך</span>
+  </div>
+  <div class="phone soft">
+    <div class="pg"><img src="../pagesv/b2-4.jpg" alt="עמוד 4"><span class="num">4/6</span></div>
+    <div class="pg"><img src="../pagesv/b2-5.jpg" alt="עמוד 5"><span class="num">5/6</span></div>
+    <div class="pg"><img src="../pagesv/b2-6.jpg" alt="עמוד 6"><span class="num">6/6</span></div>
+  </div>
+  <p class="legend">הרכות כאן מוגזמת בכוונה כדי שתראה את הכיוון.</p>
+</div>
+
+<div class="opt">
+  <h2>ג׳ — עמוד אחד גדול בכל פעם</h2>
+  <p class="note">כל עמוד תופס כשני שליש מהמסך. רק שניים נטענים יחד, ובעיקר —
+  אפשר לקרוא את זה מהשיש בלי להרים את הטלפון.</p>
+  <div class="stat">
+    <span class="chip">1200 פיקסל</span>
+    <span class="chip">כ־6MB בזיכרון</span>
+    <span class="chip">קריא מרחוק</span>
+  </div>
+  <div class="phone tall">
+    <div class="pg"><img src="../pages/b2-5.jpg" alt="עמוד 5"><span class="num">5/6</span></div>
+    <div class="pg"><img src="../pages/b2-6.jpg" alt="עמוד 6"><span class="num">6/6</span></div>
+  </div>
+  <p class="legend">אותה חדות כמו היום, פחות עמודים בו זמנית, גלילה ארוכה יותר.</p>
+</div>
+
+<div class="opt">
+  <h2>מה אני ממליץ</h2>
+  <p class="note">ג׳. הוא היחיד שפותר גם את העמוד הריק וגם את הקריאוּת מהשיש,
+  בלי לוותר על החדות שהחזרת בכוונה. המחיר היחיד הוא גלילה ארוכה יותר.</p>
+  <div class="vote">
+    <span>א׳ להשאיר</span>
+    <span>ב׳ קטן ורך</span>
+    <span>ג׳ גדול וחד</span>
+  </div>
+</div>
+
+<footer>
+  מוקאפ בלבד — לא שיניתי כלום באפליקציה. תגיד לי אות ואני מיישם.
+</footer>
+
+</body>
+</html>

@@ -48,10 +48,9 @@ Before this split, the recipes were a 10 MB inline array inside `index.html`.
 
 * **`index.json`** (~80 KB) — id, title, desc, category, time, pageCount and a 180px
   thumbnail per recipe. This is the only file fetched at launch.
-* **`pages/<id>-<n>.jpg`** — full-size page (1200px). Used by BOTH the inline flow and
-  the zoom viewer, so a page looks identical either way.
-* **`pagesv/<id>-<n>.jpg`** — 820px variants. **Currently unused by the app**, kept as a
-  rollback lever only.
+* **`pages/<id>-<n>.jpg`** — full-size page (1200px). Used by the **zoom viewer**.
+* **`pagesv/<id>-<n>.jpg`** — 820px variants. Used by the **inline flow** (changed
+  2026-08-12, see below). Both folders are live — `build.py` must keep writing both.
 
 **How the iOS memory limit is handled (changed 2026-08-08).** iOS counts every decoded
 image against a hard budget: 10 full-size pages is ~32 MB and iOS silently drops them
@@ -62,6 +61,24 @@ height beyond the screen stay decoded, the rest are set to a 1x1 blank. The
 `aspect-ratio` rule on `.page-wrap img` holds the layout still when a page is blanked.
 **Do not remove the window** — without it, full-size inline pages reintroduce the
 blank/blurry bug.
+
+**The window alone was not enough (changed 2026-08-12).** It bounds *distance*, not
+*count*. At 402px a page renders only ~207px tall, so five or six fall inside the
+window at once — for a 6-page recipe the window is effectively a no-op and ~15 MB of
+full-size bitmap is resident. Gal reported b2 page 5 painted half-scanned. Measured in
+a real browser at 402×874: 5 pages decoded at rest.
+
+Fix, Gal's call after seeing `mockups/i1786565576264-9j4v.html`: **the inline flow now
+serves `pagesv/` (820px) and the zoom viewer keeps `pages/` (1200px)** — `flowSrc()` in
+`renderRecipe()`. Halves resident bitmap. This is the 820px approach that was reverted
+on 2026-08-08 for softness; Gal chose it knowingly this time, because reading happens in
+the zoom viewer and the flow is a scanning surface. **If he complains about softness
+again, the next lever is fewer/larger pages on screen, not going back to 1200px inline.**
+
+Rejected on the way, do not retry: **serialising decodes behind `img.decode()`**. Written
+and executed at 402px — it stalls. `decode()` never settles for a page the compositor has
+parked off screen, so the queue lock leaks and later pages never get a `src` at all.
+Same reason `content-visibility:auto` must stay off `.page-wrap`.
 
 **The window must be measured in pixels from the viewport, never in page indexes.**
 An index-based window (`current ± 2`) shipped once and blanked pages that were still on

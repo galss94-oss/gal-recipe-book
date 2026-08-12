@@ -725,7 +725,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v18';
+const APP_VERSION = 'sw v19';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -998,11 +998,18 @@ function renderRecipe(id){
       else unload(i);
     }
   };
+  /* The inline flow serves the 820px variants; the zoom viewer keeps the 1200px
+     originals. At 402px a page renders only ~207px tall, so five or six sit inside
+     the window at once — at 1200px that is ~15MB of decoded bitmap and iOS gives up
+     and paints a page half-scanned (reported 2026-08-12, b2 page 5). 820px halves
+     it. Reading happens in the zoom viewer, which is untouched and still sharp.
+     User-added recipes carry base64 pages and are left exactly as they are. */
+  const flowSrc = s => s.startsWith('pages/') ? 'pagesv/' + s.slice(6) : s;
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
     img.decoding = 'async';
-    img.dataset.src = src;
+    img.dataset.src = flowSrc(src);
     img.alt = `${r.title} — עמוד ${i+1}`;
     img.onclick  = ()=>openLightbox(src, img.alt);
     if(src.startsWith('pages/')) img.onerror = ()=>retryPage(img, r.id, i);
@@ -1237,7 +1244,10 @@ async function shareRecipe(){
    with a cache-buster before falling back to the heavy recipes.json. */
 function retryPage(img, id, i){
   img.onerror = ()=>recoverPage(img, id, i);
-  setTimeout(()=>{ img.src = `pages/${id}-${i+1}.jpg?r=${Date.now()}`; }, 1200);
+  // retry whatever this img was actually asked for: the flow uses pagesv/, the
+  // zoom viewer pages/ - rebuilding the path here would retry the wrong file.
+  const base = img.dataset.src || `pages/${id}-${i+1}.jpg`;
+  setTimeout(()=>{ img.src = `${base}?r=${Date.now()}`; }, 1200);
 }
 /* If a page image is truly missing (recipes.json changed but build.py wasn't run),
    fall back to the base64 copy inside recipes.json. */

@@ -85,6 +85,16 @@ top-down flat lay perspective, No text, no letters, no photorealism.
   נפרדת ובלעדית לכך, עם "💡 טיפ לוגיסטי" ופרומפט ויזואלי המציג את ההפרדה לכלי קיבול.
 - חוק הערות צד: כל הנחיה שאינה פעולת בישול ישירה תוגדר כ-"💡 טיפ לוגיסטי" או
   "סוד קולינרי". מקם אותה בתיבת טקסט אופקית בתחתית או בצד השקופית בלבד.
+- חוק שלבי המתנה: שלב שכולו המתנה פסיבית (צינון, מנוחה, התפחה) לא יקבל שקופית משלו —
+  הוא ייכנס כ-"⏰ חוק הסנכרון" בשקופית הפעולה שלפניו. יוצא מן הכלל: אם ההמתנה דורשת
+  פעולה פיזית (כיסוי, היפוך, טפטוף, החלפת מים) — היא כן מקבלת שקופית ייעודית.
+
+אכיפת שפה (חובה): כל טקסט המופיע בשקופית — כותרות, בולטים, מספור, תוויות הטבלה
+והערות הצד — בעברית בלבד. היוצא מן הכלל היחיד הוא ה-Image Prompt, שנכתב באנגלית
+ואינו מוצג בשקופית.
+
+הערה על מספר השקופיות: העדפה מפורשת לפירוט על פני קיצור. עדיף יותר שקופיות, כל אחת
+עם פעולה אחת ברורה, מאשר שקופית עמוסה. אין תקרה למספר השקופיות.
 
 מבנה השקופיות (התחלה וסוף קשיחים, אמצע דינמי):
 
@@ -109,6 +119,12 @@ top-down flat lay perspective, No text, no letters, no photorealism.
 צילחות: חובה לפרט את כלי ההגשה למרכז השולחן ("מגש עץ מאורך", "קערת חרס רחבה").
 ויזואליה: [פרומפט באנגלית לאיור פעולת הצילחות או הכלי הייעודי]
 ```
+
+### Open question — the golden-record file
+Every prompt anchors its art direction to `Perfect_Spicy_Smashed_Sweet_Potatoes.pdf`.
+This works today, but the whole visual language depends on one file that is also a normal
+recipe: renaming or replacing it would silently break the styling of every future deck.
+Gal is aware and wants to leave it as-is for now — **revisit before changing that file.**
 
 ### How the prompt reaches NotebookLM
 The prompt is too long for the NotebookLM chat box, so it lives in a Google Doc that is

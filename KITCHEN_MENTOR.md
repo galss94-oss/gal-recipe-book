@@ -112,6 +112,19 @@ top-down flat lay perspective, No text, no letters, no photorealism.
 
 ### How the prompt reaches NotebookLM
 The prompt is too long for the NotebookLM chat box, so it lives in a Google Doc that is
-a **source** in the notebook: `1tnQ8UFaaS8ccCSMB6niBbd23B5JhzLgyQQyaiENZ0KE`. Claude
-writes the prompt straight into that doc (Docs API), then Gal opens NotebookLM and says
-"צור מתכון לפי ההנחיות", generates the Slide deck, and downloads it as PDF.
+a **source** in the notebook.
+
+**Write it with the Drive connector, not the Docs connector.** `createFile` with
+`contentMimeType: text/plain` auto-converts to a Google Doc and the Hebrew content
+survives intact (verified 2026-08-14). The Docs API (`replaceDocumentWithMarkdown`,
+`insertText`) is **disabled on the connector's Google Cloud project** and returns
+"Google Docs API has not been used in project 801725248166" — reading works, writing
+does not. Do not waste time retrying it.
+
+Consequence: Claude creates a NEW doc per recipe rather than overwriting the old one, so
+Gal adds that doc as the notebook source (one extra click, no copy-paste). Markdown
+tables do not render as real Docs tables through this path — write the ingredients table
+as pipe-separated lines; NotebookLM reads it fine and rebuilds the 3-column table itself.
+
+Then Gal opens NotebookLM, says "צור מתכון לפי ההנחיות", generates the Slide deck, and
+downloads it as PDF.

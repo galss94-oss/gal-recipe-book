@@ -29,5 +29,20 @@
   "recipeId": "b17",
   "version": "sw v19",
   "shot": "issues/i1786730466461-kz0z.jpg"
+ },
+ {
+  "id": "i1786730501738-hcei",
+  "ts": "2026-08-14T18:01:41.738Z",
+  "status": "new",
+  "category": "broken",
+  "categoryLabel": "משהו נראה שבור",
+  "text": "כמות הדקות עולה על הטקסט",
+  "page": "עיקריות",
+  "section": "קטגוריה",
+  "device": "402×874 · טלפון · iOS · dpr3",
+  "zoomed": "",
+  "recipeId": "",
+  "version": "sw v19",
+  "shot": "issues/i1786730501738-hcei.jpg"
  }
 ]

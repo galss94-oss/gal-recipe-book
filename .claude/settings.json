@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./recipes.json)",
+      "Read(./index.json)",
+      "Read(./pages/**)",
+      "Read(./pagesv/**)",
+      "Read(./.git/**)"
+    ]
+  }
+}

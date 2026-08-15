@@ -104,6 +104,11 @@ Gal can write personal notes on any recipe ("doubled the garlic, +5 min"). The l
   (`{ "<recipeId>": {text, ts} }`), then commits + pushes. Style = KITCHEN_MENTOR.md.
 * The **app** fetches `tips.json` on launch and shows that block above the recipe images.
 
+**Precondition — check this first and stop if it fails.** If `notes.json` is absent, empty,
+or unchanged since the last run, the task has nothing to do: say so in one line and exit
+without reading `KITCHEN_MENTOR.md` or anything else. As of 2026-08-15 `notes.json` has
+never existed, so every daily run so far has been a full session spun up to do nothing.
+
 `tips.json` must stay valid JSON and is small — safe to edit programmatically. The task
 must never touch `recipes.json`, `index.json`, `pages/`, or `index.html`. Notes are
 *input*, tips are *output*; the recipe images themselves are never modified (if a note
@@ -175,5 +180,34 @@ Each rewrote `index.html` wholesale from a copy that predated the recipes. Nothi
 malicious and no one was careless about the icons — the failure was structural: the app
 and the data lived in the same file, so any full-file write to the app destroyed the data.
 The split fixed the structure. Rule 2 covers what the structure can't.
+
+---
+
+## Token discipline (added 2026-08-15)
+
+These rules change *how* you work, never *what* you produce. They exist because this repo
+holds a 22 MB data file and an 87 KB app file, so a careless read costs more than the edit.
+
+1. **Never read `index.html` whole** (1,906 lines, ~22k tokens). It is a flat list of named
+   functions - locate, then read the range:
+   `grep -n "function renderRecipe" index.html` then read from that line with a limit.
+   Commits here touch 10-48 lines, median ~25. Read at that scale, not at file scale.
+2. **Never `Read` `recipes.json`, `index.json`, `pages/`, `pagesv/`** - denied in
+   `.claude/settings.json`. Query instead:
+   `python3 -c "import json;d=json.load(open('index.json'));print(len(d),[r['id'] for r in d])"`.
+   To inspect a page image, print its size/dimensions with PIL; do not load it into context.
+   (The deny list covers the `Read` tool only - `build.py` and any `python3` still work.)
+3. **Bound anything that can spew.** `git log --oneline -10`, never `git log -p`.
+   `git show --numstat`, never bare `git show`. Pipe uncertain output through `head`.
+4. **Subagents for fan-out, not for known targets.** "Which functions touch the decode
+   window?" is a subagent that returns a short list. "Read lines 962-1084" is not - a
+   subagent re-pays its whole system prompt and costs more than the read it replaces.
+   Judge a subagent by what it returns: a paragraph is a win, a wall of text is a loss.
+5. **Model routing.** Subagents that read, search, count or check formatting run `haiku`;
+   implementation subagents run `sonnet`. Set it in the agent definition, not per call.
+   The main session is never downgraded.
+6. **One task per session, and stop when done.** Each daily task gets a fresh session -
+   never resume yesterday's. A task with nothing to do says so and exits; it does not go
+   looking for work to justify the run.
 
 Cooking and recipe-writing instructions for Gal live in `KITCHEN_MENTOR.md`.

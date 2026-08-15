@@ -123,7 +123,13 @@
     width:72px; height:72px; border-radius:12px; object-fit:cover; flex-shrink:0;
     border:1px solid var(--line); background:var(--accent-soft);
   }
-  .recipe-card .info{flex:1; min-width:0;}
+  /* The time badge is absolutely positioned over the card's top-left corner and is
+     invisible to the text flow, so a long title's first line ran straight under it
+     (reported 2026-08-14, "כמות הדקות עולה על הטקסט"). It only showed on iOS: the
+     iOS Hebrew system font sets wider than the desktop fallback, so the line reached
+     the badge there and cleared it by ~10px in desktop Chrome. Reserve the badge's
+     column in the text box instead of relying on font metrics. */
+  .recipe-card .info{flex:1; min-width:0; padding-left:26px;}
   .recipe-card .title{font-weight:800; font-size:16px; margin:0 0 4px; color:#5b3a1e;}
   .recipe-card .desc{color:var(--muted); font-size:13.5px; margin:0; line-height:1.5;}
   .recipe-card .chev{color:var(--accent2); font-size:22px; flex-shrink:0;}
@@ -725,7 +731,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v19';
+const APP_VERSION = 'sw v20';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -974,7 +980,20 @@ function renderRecipe(id){
      screen: at phone width a page renders only ~200px tall, so four or five are
      visible at once and "current +/- 2" could not cover them.
      Invariant: a page whose box touches the viewport is NEVER unloaded. */
-  const KEEP_MARGIN = 0.25;                  // keep a quarter-viewport beyond each edge
+  /* The window is asymmetric (changed 2026-08-15). It used to keep 0.25vh beyond both
+     edges, which left only ~218px of runway below the fold — about one page height at
+     402px. A page therefore started loading barely before it was scrolled into view and
+     was caught mid-paint: Gal reported b17 page 5 painted half-way down, the same
+     symptom as the b2 report, and page 5 is exactly the last page inside the old
+     window. Loading is what was short, not memory: measured at 402x874 the old window
+     held 5 pages / 7.2 MB of decoded 820px bitmap, nowhere near the ~32 MB that broke
+     things back when the flow served 1200px pages.
+     So look further AHEAD (0.75vh, ~2 pages of runway) and keep BEHIND as it was, so
+     scrolling back up still finds the previous pages decoded. That holds ~8 pages /
+     11.5 MB — still less than half the budget that failed. If blank pages ever come
+     back, cut LOOK_AHEAD before touching LOOK_BEHIND: unloading behind is what made
+     pages vanish and reappear the last time this was tuned. */
+  const LOOK_BEHIND = 0.25, LOOK_AHEAD = 0.75;
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   const pageImgs = [], pageWraps = [];
   const startLoad = i => {
@@ -991,7 +1010,7 @@ function renderRecipe(id){
   };
   const updateWindow = ()=>{
     const vh = window.innerHeight;
-    const top = -vh * KEEP_MARGIN, bottom = vh * (1 + KEEP_MARGIN);
+    const top = -vh * LOOK_BEHIND, bottom = vh * (1 + LOOK_AHEAD);
     for(let i = 0; i < pageWraps.length; i++){
       const box = pageWraps[i].getBoundingClientRect();
       if(box.bottom >= top && box.top <= bottom) startLoad(i);

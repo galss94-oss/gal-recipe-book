@@ -41,6 +41,18 @@ Operating principles:
   recipe text.**
 - **Absolute precision, dual measures enforced** — every ingredient, spice or liquid
   carries BOTH grams/ml AND a home measure (כפות, כפיות, כוסות). Never one alone.
+- **No aggregated spice rows — one line per spice (learned 2026-08-15).** A row like
+  `תערובת תבלינים (מלח, פלפל שחור, פפריקה, בהרט) | 10 כפיות סה"כ | 40 גרם סה"כ` is
+  unusable: standing at the counter with four jars, Gal cannot know how much of each to
+  add. It also breaks the dual-measure rule, because no individual spice ends up with a
+  measure of its own. **Never write "סה"כ" for a group of seasonings.** Each spice gets
+  its own row with its own gram and home measure.
+  The same applies to any ingredient used in more than one component: if salt seasons the
+  eggplant AND the meat AND the sauce, give each its own line with its own amount
+  (`מלח (להמלחת החציל)`, `מלח (לקציצות)`, `מלח (לרוטב)`). Aggregating creates a real
+  ambiguity about whether the parts are included in the total or additional to it.
+  In the step text, never write a bare "התבלינים" — name them, or state the exact amounts
+  again, so the breakdown exists somewhere the cook actually reads while cooking.
 - **Mandatory times** — an exact time for every physical action ("צריבה של 4 דקות",
   "מנוחה במקרר של 15 דקות").
 - **חוק הסנכרון והרצף** — order the steps by physical logic (what to do while something
@@ -106,6 +118,10 @@ top-down flat lay perspective, No text, no letters, no photorealism.
 שקופית 2 - טבלת מרכיבים חסינה (קשיח):
 הוראה: עמוד נפרד המוצג כטבלה מחולקת ל-3 עמודות קבועות:
 "רכיב" | "מידה ביתית" | "משקל (גרם/מ"ל)".
+חוק פירוק תבלינים (חובה): חל איסור מוחלט לאחד תבלינים לשורה אחת עם "סה"כ".
+כל תבלין מקבל שורה משלו עם מידה ביתית ומשקל משלו. תבלין המשמש בכמה רכיבים של המנה
+(למשל מלח להמלחת החציל, מלח לקציצות, מלח לרוטב) יקבל שורה נפרדת לכל שימוש, עם הכמות
+המדויקת לאותו שימוש. גם בשלבי ההכנה — אין לכתוב "התבלינים" בלבד, אלא לפרט אותם.
 ויזואליה: [פרומפט באנגלית לאיור אינפוגרפי של כל המצרכים במבט-על]
 
 שקופיות 3 עד הלפני-אחרונה - שלבי ההכנה (דינמי):

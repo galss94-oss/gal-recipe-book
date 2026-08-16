@@ -61,5 +61,20 @@
   "recipeId": "",
   "version": "sw v20",
   "shot": ""
+ },
+ {
+  "id": "i1786914336888-6v24",
+  "ts": "2026-08-16T21:05:36.888Z",
+  "status": "new",
+  "category": "image",
+  "categoryLabel": "תמונה לא נטענת",
+  "text": "[תמונה לא נטענת]",
+  "page": "מסך הבית",
+  "section": "בית",
+  "device": "820×1180 · טאבלט · iOS · dpr2",
+  "zoomed": "",
+  "recipeId": "",
+  "version": "sw v20",
+  "shot": "issues/i1786914336888-6v24.jpg"
  }
 ]

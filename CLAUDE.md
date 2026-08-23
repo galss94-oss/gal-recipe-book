@@ -11,7 +11,7 @@ rules, update this file in the same commit.
 | Chat | Owns | Touches |
 |---|---|---|
 | **"Recipe portal app"** | The app: design, layout, icons, manifest, features | `index.html`, `manifest.json`, `sw.js`, `icon-*.png`, `build.py` |
-| **"Upload recipes"** | The content: adding recipes from NotebookLM PDFs | `recipes.json` (then run `build.py`) |
+| **"Upload new recipes"** | The content: adding recipes from NotebookLM PDFs | `recipes.json` (then run `build.py`) |
 
 Generated, never hand-edited: `index.json`, `pages/*.jpg`.
 Notes/tips data: `notes.json` (written by the app), `tips.json` (written by the daily task).

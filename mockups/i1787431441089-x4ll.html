@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מוקאפ · טבלת מרכיבים מחולקת לפי נושאים</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 3px 12px rgba(66,51,42,.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    padding:16px max(16px, env(safe-area-inset-right,0px))
+            calc(24px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
+  }
+  .wrap{max-width:402px; margin:0 auto;}
+  .note{font-size:13px; color:var(--muted); line-height:1.7; margin:0 0 18px;}
+  .panel{
+    background:var(--card); border:1.5px solid var(--frame); border-radius:18px;
+    padding:14px; box-shadow:var(--shadow); margin-bottom:20px;
+  }
+  .panel h2{font-size:14px; color:var(--accent); margin:0 0 10px; font-weight:800;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    background:var(--accent-soft); color:var(--accent); font-weight:800;
+    padding:8px 6px; text-align:right; border:1px solid var(--line);
+  }
+  td{padding:7px 6px; border:1px solid var(--line); text-align:right; line-height:1.5;}
+  tr.grp td{
+    background:var(--bg2); color:var(--accent); font-weight:800;
+    font-size:13.5px; padding:9px 6px;
+  }
+  .legend{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; font-size:13.5px; line-height:1.8;
+  }
+  .legend b{color:var(--accent);}
+  .legend ul{margin:8px 0 0; padding-inline-start:18px;}
+  code{background:var(--accent-soft); border-radius:4px; padding:1px 4px; font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<p class="note">
+  מוקאפ לדיווח i1787431441089-x4ll — חלוקת טבלת המרכיבים לפי נושאים בפרומפט ל־NotebookLM.
+  זו הצעה לניסוח כלל בשקופית 2, לא שינוי באפליקציה. הדוגמה: קציצות בקר ברוטב לימון ואורז (b17).
+</p>
+
+<div class="panel">
+  <h2>היום — רשימה שטוחה, השיוך בסוגריים</h2>
+  <table>
+    <tr><th>רכיב</th><th>מידה ביתית</th><th>משקל</th></tr>
+    <tr><td>בקר טחון (20% שומן)</td><td>—</td><td>1200 גרם</td></tr>
+    <tr><td>שמן זית (לקציצות)</td><td>2 כפות</td><td>30 מ"ל</td></tr>
+    <tr><td>שמן זית (לרוטב)</td><td>4 כפות</td><td>60 מ"ל</td></tr>
+    <tr><td>מלח דק (לקציצות)</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+    <tr><td>מלח דק (לרוטב)</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+    <tr><td>מלח דק (לאורז)</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+    <tr><td>מים רותחים (לאורז)</td><td>4.5 כוסות</td><td>1080 מ"ל</td></tr>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>ההצעה — אותן שורות, מקובצות לפי שימוש</h2>
+  <table>
+    <tr><th>רכיב</th><th>מידה ביתית</th><th>משקל</th></tr>
+    <tr class="grp"><td colspan="3">לקציצות</td></tr>
+    <tr><td>בקר טחון (20% שומן)</td><td>—</td><td>1200 גרם</td></tr>
+    <tr><td>שמן זית</td><td>2 כפות</td><td>30 מ"ל</td></tr>
+    <tr><td>מלח דק</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+    <tr><td>כמון</td><td>1 כפית</td><td>5 גרם</td></tr>
+    <tr class="grp"><td colspan="3">לרוטב הלימון</td></tr>
+    <tr><td>שמן זית</td><td>4 כפות</td><td>60 מ"ל</td></tr>
+    <tr><td>מלח דק</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+    <tr><td>מיץ לימון סחוט</td><td>1.5 לימונים</td><td>60 מ"ל</td></tr>
+    <tr><td>ציר עוף רותח</td><td>4 כוסות</td><td>960 מ"ל</td></tr>
+    <tr class="grp"><td colspan="3">לאורז</td></tr>
+    <tr><td>אורז בסמטי</td><td>3 כוסות</td><td>600 גרם</td></tr>
+    <tr><td>מים רותחים</td><td>4.5 כוסות</td><td>1080 מ"ל</td></tr>
+    <tr><td>שמן זית</td><td>2 כפות</td><td>30 מ"ל</td></tr>
+    <tr><td>מלח דק</td><td>1.5 כפיות</td><td>7.5 גרם</td></tr>
+  </table>
+</div>
+
+<div class="legend">
+  <b>מה זה משנה בפרומפט</b>
+  <ul>
+    <li>מלח מופיע שלוש פעמים — בדיוק כמו שביקשת. חוק פירוק התבלינים נשאר כמו שהוא,
+        רק מקבל כותרת מעל כל קבוצה.</li>
+    <li>שמות הקבוצות נגזרים מהמנה עצמה (לקציצות / לרוטב / לאורז / לתיבול העוף),
+        ולא מרשימה קבועה.</li>
+    <li>סדר הקבוצות = סדר העבודה במטבח, כדי שאפשר יהיה לעבוד לפי הטבלה מלמעלה למטה.</li>
+    <li>התוספת ל־<code>KITCHEN_MENTOR.md</code>, שקופית 2:
+        "חוק קיבוץ לפי שימוש (חובה): הטבלה מחולקת לקבוצות לפי רכיבי המנה, כל קבוצה
+        פותחת בשורת כותרת. רכיב המשמש בכמה קבוצות חוזר בכל אחת מהן עם הכמות שלה."</li>
+    <li>שאלה אחת פתוחה: להשאיר את הסוגריים כגיבוי בתוך הקבוצה (למשל "מלח (לקציצות)"),
+        או לוותר עליהן כשהכותרת כבר אומרת את זה? המוקאפ מראה בלי.</li>
+  </ul>
+</div>
+
+</div>
+</body>
+</html>

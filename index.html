@@ -731,7 +731,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v20';
+const APP_VERSION = 'sw v21';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -1008,7 +1008,21 @@ function renderRecipe(id){
     img.dataset.started = '';
     img.src = BLANK;
   };
+  /* Reported 2026-08-16 (b1 page 4, iPad 820x1180): a page mid-flow painted only its
+     top strip with --accent-soft below it. Not memory - 820px pages are 1.5 MB decoded
+     each, so even a whole 7-page recipe is ~10.5 MB, a third of the ~32 MB that failed
+     at 1200px. The cause is the unload/reload churn itself: scrolling back over a page
+     that was already decoded throws it away and re-decodes it, and a baseline JPEG
+     re-decoding paints top-down, so the screen shows half a page.
+     So: if the whole recipe fits inside the safe budget, never unload at all - load
+     every page once and leave it decoded. 13 of 17 recipes have <= 8 pages. Only the
+     long ones (9-10 pages) still ride the sliding window. */
+  const MAX_RESIDENT = 8;
   const updateWindow = ()=>{
+    if(pageWraps.length <= MAX_RESIDENT){
+      for(let i = 0; i < pageWraps.length; i++) startLoad(i);
+      return;
+    }
     const vh = window.innerHeight;
     const top = -vh * LOOK_BEHIND, bottom = vh * (1 + LOOK_AHEAD);
     for(let i = 0; i < pageWraps.length; i++){

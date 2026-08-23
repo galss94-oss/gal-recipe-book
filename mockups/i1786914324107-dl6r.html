@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מוקאפ · בקשת מתכון ממסך הבית</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 3px 12px rgba(66,51,42,.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    padding:16px max(16px, env(safe-area-inset-right,0px))
+            calc(24px + env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
+  }
+  .note{max-width:402px; margin:0 auto 18px; font-size:13px; color:var(--muted); line-height:1.7;}
+  .phone{
+    max-width:402px; margin:0 auto 26px; background:var(--bg);
+    border:1.5px solid var(--frame); border-radius:22px; padding:14px; box-shadow:var(--shadow);
+  }
+  .phone h2{font-size:13px; color:var(--accent); margin:0 0 12px; font-weight:800;}
+  .hero{
+    background:var(--card); border:1.5px solid var(--frame); border-radius:18px;
+    padding:16px; text-align:center; box-shadow:var(--shadow);
+  }
+  .hero .t{font-size:21px; font-weight:800; color:var(--accent);}
+  .hero .s{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .search{
+    margin-top:12px; width:100%; min-height:46px; padding:11px 42px 11px 14px;
+    border:1px solid var(--line); border-radius:23px; font-size:16px;
+    background:#fffdf8; color:var(--muted); text-align:right; line-height:24px;
+  }
+  .ask-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; margin-top:14px; padding:12px 16px;
+    border:1.5px solid var(--frame); border-radius:16px;
+    background:var(--accent-soft); color:var(--accent);
+    font-size:16px; font-weight:800; font-family:inherit; cursor:pointer;
+    box-shadow:var(--shadow);
+  }
+  .ask-btn .ic{display:flex;}
+  .sec-title{
+    font-size:13px; color:var(--muted); text-align:center; font-weight:700;
+    margin:20px 0 10px; position:relative;
+  }
+  .sheet{
+    background:var(--card); border:1.5px solid var(--frame);
+    border-radius:18px; padding:18px; box-shadow:var(--shadow);
+  }
+  .sheet h3{margin:0 0 4px; font-size:18px; color:var(--accent); font-weight:800;}
+  .sheet p.sub{margin:0 0 14px; font-size:13px; color:var(--muted); line-height:1.6;}
+  label{display:block; font-weight:800; font-size:14px; margin:14px 0 6px; color:#5b3a1e;}
+  label:first-of-type{margin-top:0;}
+  .fld{
+    width:100%; padding:12px; border:1px solid var(--line); border-radius:12px;
+    font-size:16px; font-family:inherit; background:#fffdf8; color:var(--ink); text-align:right;
+  }
+  textarea.fld{min-height:96px; resize:vertical; line-height:1.6;}
+  .chips{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--muted);
+    font-size:14px; font-weight:700; padding:0 16px; border-radius:22px;
+    min-height:44px; display:flex; align-items:center; cursor:pointer; font-family:inherit;
+  }
+  .chip.on{background:var(--accent-soft); color:var(--accent); border-color:var(--accent2);}
+  .primary-btn{
+    width:100%; margin-top:18px; min-height:52px; padding:14px; border:none; border-radius:14px;
+    background:linear-gradient(160deg, var(--accent2), var(--accent)); color:#fff;
+    font-size:17px; font-weight:800; cursor:pointer; font-family:inherit;
+    box-shadow:0 3px 10px rgba(163,76,23,.3);
+  }
+  .hint{font-size:12.5px; color:var(--muted); margin-top:10px; line-height:1.7;}
+  .legend{
+    max-width:402px; margin:0 auto; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:14px 16px; font-size:13.5px; color:var(--ink); line-height:1.8;
+  }
+  .legend b{color:var(--accent);}
+  .legend ul{margin:8px 0 0; padding-inline-start:18px;}
+</style>
+</head>
+<body>
+
+<p class="note">
+  מוקאפ לדיווח i1786914324107-dl6r — כפתור "בקשת מתכון" במסך הבית. לא מומש באפליקציה,
+  רק הצעה לאישור. הרוחב כאן זהה לטלפון (402px).
+</p>
+
+<div class="phone">
+  <h2>1 · מסך הבית</h2>
+  <div class="hero">
+    <div class="t">ספר המתכונים של גל</div>
+    <div class="s">מדריכים קולינריים מצוירים · צעד אחר צעד</div>
+    <div class="search">חיפוש מתכון...</div>
+  </div>
+
+  <button class="ask-btn">
+    <span class="ic" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </span>
+    בקשת מתכון חדש
+  </button>
+
+  <div class="sec-title">בישלת לאחרונה</div>
+  <div style="height:96px; border:1px dashed var(--line); border-radius:14px;
+              display:flex; align-items:center; justify-content:center;
+              color:var(--muted); font-size:13px;">
+    (רצועת המתכונים הקיימת — ללא שינוי)
+  </div>
+</div>
+
+<div class="phone">
+  <h2>2 · הטופס שנפתח בלחיצה</h2>
+  <div class="sheet">
+    <h3>בקשת מתכון חדש</h3>
+    <p class="sub">כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.</p>
+
+    <label for="dish">מה להכין?</label>
+    <input class="fld" id="dish" value="ריזוטו פטריות" readonly>
+
+    <label>סוג הארוחה</label>
+    <div class="chips">
+      <span class="chip on">עיקריות</span>
+      <span class="chip">תוספות</span>
+      <span class="chip">קינוחים</span>
+      <span class="chip">מרקים</span>
+    </div>
+
+    <label for="more">פרטים (לא חובה)</label>
+    <textarea class="fld" id="more" readonly>בלי יין, לארבעה, ערב חול</textarea>
+
+    <button class="primary-btn">שלח בקשה</button>
+    <p class="hint">
+      אפשר גם להכתיב בקול, בדיוק כמו בדיווח תקלה. הבקשה יורדת לתור ומקבלת מענה
+      בהרצה היומית.
+    </p>
+  </div>
+</div>
+
+<div class="legend">
+  <b>ההצעה בקצרה</b>
+  <ul>
+    <li>כפתור אחד מתחת לחיפוש במסך הבית — 52px גובה, נוח לאגודל רטוב.</li>
+    <li>הוא פותח את אותה מגירה של דיווח תקלה, רק עם קטגוריה חדשה "בקשת מתכון",
+        כולל הכתבה בקול. אין מנגנון חדש לתחזק.</li>
+    <li>הבקשה נכתבת ל־<code>issues.json</code> עם <code>category:"request"</code>,
+        ונכנסת לתור הטריאז' היומי.</li>
+    <li>מה שאני עדיין צריך ממך: האם הבקשה צריכה גם לפתוח לך פרומפט מוכן ל־NotebookLM,
+        או רק להישמר כרשימת משאלות?</li>
+  </ul>
+</div>
+
+</body>
+</html>

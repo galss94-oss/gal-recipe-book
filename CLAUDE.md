@@ -11,7 +11,27 @@ rules, update this file in the same commit.
 | Chat | Owns | Touches |
 |---|---|---|
 | **"Recipe portal app"** | The app: design, layout, icons, manifest, features | `index.html`, `manifest.json`, `sw.js`, `icon-*.png`, `build.py` |
-| **"Upload new recipes"** | The content: adding recipes from NotebookLM PDFs | `recipes.json` (then run `build.py`) |
+| **"Upload new recipes"** | The content: adding recipes from NotebookLM PDFs, and Gal's culinary voice | `recipes.json` (then run `build.py`), `KITCHEN_MENTOR.md` |
+
+### Issue routing — app vs. kitchen (added 2026-08-23)
+
+Gal files reports from the app's 🏳 flag button into `issues.json`. The daily
+`gal-recipe-issue-triage` task drains that queue. Two kinds of report exist, and they
+belong to different owners:
+
+* **App issues** — how the book *presents* a recipe (layout, contrast, tap targets,
+  images not loading). The triage task fixes these itself, or mocks them up and sets
+  `status: "awaiting approval"`.
+* **Kitchen issues** — what a recipe *says*: the NotebookLM prompt template, measurement
+  rules, spice breakdown, ingredient grouping, cooking style. The triage task **cannot
+  act on these** — recipe pages are baked images, and the rules live in
+  `KITCHEN_MENTOR.md`, owned by the "Upload new recipes" chat.
+
+Routing: triage sets `status: "awaiting kitchen"` on a kitchen issue and stops.
+**The "Upload new recipes" chat checks for `awaiting kitchen` rows at the start of every
+session**, decides, edits `KITCHEN_MENTOR.md`, and closes the row with
+`status: "done <date>"` plus a `resolution` line. A rule only applies to prompts written
+after it lands — existing recipe images are never regenerated.
 
 Generated, never hand-edited: `index.json`, `pages/*.jpg`.
 Notes/tips data: `notes.json` (written by the app), `tips.json` (written by the daily task).

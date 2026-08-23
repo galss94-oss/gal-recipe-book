@@ -223,6 +223,34 @@
   }
   .chip.on{background:var(--accent-soft); color:var(--accent); border-color:var(--accent2);}
 
+  /* ---- Recipe request (issue i1786914324107-dl6r) ---- */
+  .ask-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; min-height:52px; margin:0 0 18px; padding:12px 16px;
+    border:1.5px solid var(--frame); border-radius:16px;
+    background:var(--accent-soft); color:var(--accent);
+    font-size:16px; font-weight:800; font-family:inherit; cursor:pointer;
+    box-shadow:var(--shadow); transition:transform .12s ease;
+  }
+  .ask-btn:active{transform:scale(.99);}
+  .req-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px; font-size:14px; color:var(--ink);
+  }
+  .req-row .t{line-height:1.5;}
+  .req-badge{
+    flex:0 0 auto; font-size:12px; font-weight:700; border-radius:20px;
+    padding:4px 12px; background:var(--accent-soft); color:var(--accent);
+  }
+  /* --muted on --bg2 measures 4.23:1, below AA - the handled badge uses --ink (9.6:1) */
+  .req-badge.done{background:var(--bg2); color:var(--ink);}
+  #rpDish{
+    width:100%; min-height:46px; padding:12px; border:1px solid var(--line);
+    border-radius:12px; font-size:16px; font-family:inherit;
+    background:#fffdf8; color:var(--ink); text-align:right;
+  }
+
   /* ---- Favourite button ---- */
   .fav-btn{
     border:1px solid var(--frame); background:var(--card); color:var(--accent);
@@ -536,20 +564,26 @@
   <div class="rp-wrap">
     <div class="rp-card">
       <div class="rp-head">
-        <h2>⚑ דיווח על תקלה</h2>
+        <h2 id="rpTitle">⚑ דיווח על תקלה</h2>
         <button class="edit-btn" onclick="closeReport()">סגור</button>
       </div>
-      <p class="rp-sub">ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.</p>
+      <p class="rp-sub" id="rpSub">ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.</p>
 
-      <label>מה הבעיה?</label>
+      <div id="rpDishRow" style="display:none">
+        <label for="rpDish">מה להכין?</label>
+        <input type="text" id="rpDish" placeholder="ריזוטו פטריות" autocomplete="off">
+      </div>
+
+      <label id="rpCatLabel">מה הבעיה?</label>
       <div class="rp-cats" id="rpCats"></div>
 
-      <label>פירוט (לא חובה)</label>
+      <label id="rpTextLabel">פירוט (לא חובה)</label>
       <div class="rp-ta-wrap">
         <textarea id="rpText" placeholder="מה קרה? אפשר גם להכתיב 🎤" aria-label="פירוט התקלה"></textarea>
         <button class="rp-mic" id="rpMic" onclick="rpToggleDictation()" aria-label="הכתבה">🎤</button>
       </div>
 
+      <div id="rpShotSection">
       <label>צילום מסך (לא חובה)</label>
       <div class="rp-shot-row">
         <button class="rp-shot-btn" onclick="document.getElementById('rpShot').click()">צרף צילום 📷</button>
@@ -559,6 +593,7 @@
           <span id="rpShotSize"></span>
           <button onclick="rpClearShot()" aria-label="הסר צילום">✕</button>
         </div>
+      </div>
       </div>
 
       <div class="rp-ctx" id="rpCtx"></div>
@@ -590,6 +625,15 @@
     <div id="searchResults" style="display:none"></div>
 
     <div id="homeSections">
+      <button class="ask-btn" onclick="openRequest()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        בקשת מתכון חדש
+      </button>
+      <div id="reqSection" style="display:none">
+        <div class="section-label">הבקשות שלי</div>
+        <div id="reqList"></div>
+      </div>
       <div id="favSection" style="display:none">
         <div class="section-label">המועדפים שלי</div>
         <div class="strip" id="favStrip"></div>
@@ -731,7 +775,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v21';
+const APP_VERSION = 'sw v22';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -926,9 +970,35 @@ function renderStrips(){
   document.getElementById('favSection').style.display    = favN ? 'block' : 'none';
   document.getElementById('recentSection').style.display = recN ? 'block' : 'none';
 }
+/* "הבקשות שלי" — reads issues.json straight off Pages, no token needed. It is a
+   nicety: any failure hides the section rather than showing an error on the home
+   screen. Requests are the only rows shown; reports stay out of Gal's way. */
+async function renderRequests(){
+  const sec = document.getElementById('reqSection');
+  const host = document.getElementById('reqList');
+  try{
+    const r = await fetch('issues.json?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('http ' + r.status);
+    const all = await r.json();
+    const reqs = (Array.isArray(all) ? all : [])
+      .filter(x => x && x.category === 'request').slice(-5).reverse();
+    if(!reqs.length){ sec.style.display = 'none'; return; }
+    host.innerHTML = '';
+    reqs.forEach(x=>{
+      const pend = x.status === 'new';
+      const d = document.createElement('div');
+      d.className = 'req-row';
+      d.innerHTML = `<span class="t">${esc(x.text || '')}</span>` +
+        `<span class="req-badge${pend ? '' : ' done'}">${pend ? 'ממתין' : 'טופל'}</span>`;
+      host.appendChild(d);
+    });
+    sec.style.display = 'block';
+  }catch(e){ sec.style.display = 'none'; }
+}
 function renderHome(){
   nav = {view:'home'};
   renderStrips();
+  renderRequests();
   const g = document.getElementById('catGrid');
   g.innerHTML = '';
   const cats = categories();
@@ -1401,6 +1471,7 @@ const RP_CATS = [
   {id:'idea',    em:'💡', label:'רעיון לשיפור'}
 ];
 let rpCat = null, rpShotData = null, rpRecog = null, rpRecording = false;
+let rpMode = 'issue';   // 'issue' = tap the flag, 'request' = ask for a new recipe
 
 /* Classify the device. A raw pixel count is ambiguous: a zoomed iPhone reports
    a narrow width and reads like an unknown small device. screen.width is
@@ -1436,14 +1507,36 @@ function rpRenderCtx(){
     (d.zoomed ? ` · <span class="zoom">${esc(d.zoomed)}</span>` : '') +
     `<br><span class="k">גרסה:</span> ${esc(APP_VERSION)}`;
 }
-function openReport(){
+/* The recipe request (issue i1786914324107-dl6r) rides the report sheet rather than
+   getting its own overlay: same GitHub write, same dictation, same failure handling.
+   Gal chose "saved only" over "also builds a NotebookLM prompt" so the prompt template
+   stays in KITCHEN_MENTOR.md alone and cannot drift out of sync with the app. */
+function openRequest(){ openReport('request'); }
+function openReport(mode){
+  rpMode = (mode === 'request') ? 'request' : 'issue';
+  const req = rpMode === 'request';
   const ov = document.getElementById('reportOverlay');
+  document.getElementById('rpTitle').textContent = req ? 'בקשת מתכון חדש' : '⚑ דיווח על תקלה';
+  document.getElementById('rpSub').textContent = req
+    ? 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.'
+    : 'ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.';
+  document.getElementById('rpCatLabel').textContent = req ? 'סוג הארוחה (לא חובה)' : 'מה הבעיה?';
+  document.getElementById('rpTextLabel').textContent = req ? 'פרטים (לא חובה)' : 'פירוט (לא חובה)';
+  document.getElementById('rpDishRow').style.display = req ? '' : 'none';
+  document.getElementById('rpShotSection').style.display = req ? 'none' : '';
+  document.getElementById('rpCtx').style.display = req ? 'none' : '';
+  document.getElementById('rpSend').textContent = req ? 'שלח בקשה' : 'שלח דיווח';
+  document.getElementById('rpDish').value = '';
+  document.getElementById('rpText').placeholder = req
+    ? 'בלי יין, לארבעה, ערב חול' : 'מה קרה? אפשר גם להכתיב 🎤';
   // most-recently-used categories float to the top
   const recentCats = LS.get('rpRecentCats', []);
-  const ordered = RP_CATS.slice().sort((a,b)=>{
-    const ia = recentCats.indexOf(a.id), ib = recentCats.indexOf(b.id);
-    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-  });
+  const ordered = req
+    ? categories().map(([n])=>({id:n, label:n, em:''}))
+    : RP_CATS.slice().sort((a,b)=>{
+        const ia = recentCats.indexOf(a.id), ib = recentCats.indexOf(b.id);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
   const host = document.getElementById('rpCats');
   host.innerHTML = '';
   ordered.forEach(c=>{
@@ -1540,7 +1633,13 @@ async function rpSubmit(){
   const msg = document.getElementById('rpMsg');
   const btn = document.getElementById('rpSend');
   const text = document.getElementById('rpText').value.trim();
-  if(!rpCat && !text){
+  const req = rpMode === 'request';
+  const dish = document.getElementById('rpDish').value.trim();
+  if(req && !dish){
+    msg.className = 'rp-msg err'; msg.textContent = 'כתוב מה להכין';
+    return;
+  }
+  if(!req && !rpCat && !text){
     msg.className = 'rp-msg err'; msg.textContent = 'בחר קטגוריה או כתוב מה קרה';
     return;
   }
@@ -1556,10 +1655,12 @@ async function rpSubmit(){
     id: 'i' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
     ts: new Date().toISOString(),
     status: 'new',
-    category: rpCat ? rpCat.id : '',
-    categoryLabel: rpCat ? rpCat.label : '',
+    category: req ? 'request' : (rpCat ? rpCat.id : ''),
+    categoryLabel: req ? 'בקשת מתכון' : (rpCat ? rpCat.label : ''),
     // a category with no text is a valid one-tap report
-    text: text || ('[' + (rpCat ? rpCat.label : '') + ']'),
+    text: req
+      ? dish + (rpCat ? ' · ' + rpCat.label : '') + (text ? ' — ' + text : '')
+      : (text || ('[' + (rpCat ? rpCat.label : '') + ']')),
     page: w.page, section: w.section,
     device: d.text, zoomed: d.zoomed,
     recipeId: nav.view === 'recipe' ? nav.recipeId : '',
@@ -1575,13 +1676,20 @@ async function rpSubmit(){
     const {sha, data} = await ghGetFile('issues.json');
     const list = Array.isArray(data) ? data : [];
     list.push(entry);
-    await ghPutFile('issues.json', list, sha, 'Report: ' + entry.text.slice(0, 60));
+    await ghPutFile('issues.json', list, sha,
+      (req ? 'Recipe request: ' : 'Report: ') + entry.text.slice(0, 60));
     // only now is it safe to claim success and clear
     rpStopDictation();                       // before reset, or a late result refills it
-    const rc = [entry.category].concat(LS.get('rpRecentCats', []).filter(x=>x!==entry.category)).slice(0,4);
-    LS.set('rpRecentCats', rc);
-    msg.className = 'rp-msg ok'; msg.textContent = '✓ נשמר — ייכנס לטיפול היומי';
+    // meal types are not report categories - keep them out of the report MRU
+    if(!req){
+      const rc = [entry.category].concat(LS.get('rpRecentCats', []).filter(x=>x!==entry.category)).slice(0,4);
+      LS.set('rpRecentCats', rc);
+    }
+    msg.className = 'rp-msg ok';
+    msg.textContent = req ? '✓ הבקשה נשמרה' : '✓ נשמר — ייכנס לטיפול היומי';
     document.getElementById('rpText').value = '';
+    document.getElementById('rpDish').value = '';
+    if(req && nav.view === 'home') renderRequests();
     rpClearShot(); rpCat = null;
     document.querySelectorAll('#rpCats .rp-cat').forEach(x=>x.classList.remove('on'));
     setTimeout(closeReport, 1400);

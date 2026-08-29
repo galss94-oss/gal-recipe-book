@@ -109,5 +109,20 @@
   "recipeId": "",
   "version": "sw v22",
   "shot": ""
+ },
+ {
+  "id": "i1788047242017-dhik",
+  "ts": "2026-08-29T23:47:22.017Z",
+  "status": "new",
+  "category": "idea",
+  "categoryLabel": "רעיון לשיפור",
+  "text": "לקבל חיווי חיובי בחלונית הזאת שהבקשה נקלטה בהצלחה; סטטוס בקשה",
+  "page": "מסך הבית",
+  "section": "בית",
+  "device": "820×1180 · טאבלט · iOS · dpr2",
+  "zoomed": "",
+  "recipeId": "",
+  "version": "sw v22",
+  "shot": ""
  }
 ]

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מוקאפ · אישור קליטה וסטטוס בקשה</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 3px 12px rgba(66,51,42,.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Arial Hebrew","Noto Sans Hebrew",sans-serif;
+    padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 28px);
+    font-size:16px; line-height:1.6;
+  }
+  .wrap{max-width:480px; margin:0 auto;}
+  h1{font-size:20px; margin:0 0 6px;}
+  .sub{color:var(--muted); font-size:14.5px; margin:0 0 18px;}
+  .why{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin:0 0 22px; box-shadow:var(--shadow); font-size:14.5px;
+  }
+  .why b{color:var(--accent);}
+  .why p{margin:0 0 8px;} .why p:last-child{margin:0;}
+  .opt{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:14px; margin-bottom:20px; box-shadow:var(--shadow);
+  }
+  .opt h2{font-size:17px; margin:0 0 4px; color:var(--accent);}
+  .opt .note{font-size:14px; color:var(--muted); margin:0 0 14px;}
+  .screen{
+    background:var(--bg2); border:1.5px solid var(--frame); border-radius:14px;
+    padding:14px;
+  }
+  .sheet{
+    background:var(--card); border:1.5px solid var(--frame); border-radius:18px;
+    padding:18px 14px; text-align:center;
+  }
+  .tick{
+    width:56px; height:56px; border-radius:50%; margin:0 auto 12px;
+    background:var(--accent-soft); border:2px solid var(--frame);
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; color:var(--accent); font-weight:800;
+  }
+  .sheet h3{margin:0 0 6px; font-size:18px; color:var(--accent);}
+  .sheet p{margin:0 0 4px; font-size:14.5px;}
+  .sheet .meta{color:var(--muted); font-size:13px; margin-top:10px;}
+  .sheet-btn{
+    min-height:48px; width:100%; margin-top:14px; padding:12px;
+    border:1.5px solid var(--frame); border-radius:14px;
+    background:var(--accent-soft); color:var(--accent);
+    font-size:16px; font-weight:800; font-family:inherit; cursor:pointer;
+  }
+  .old-msg{font-size:13.5px; font-weight:700; color:#3f7d3a; text-align:center; margin-top:10px;}
+  .section-label{font-size:13px; font-weight:800; color:var(--muted); margin:0 0 8px;}
+  .req-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:11px 12px; margin-bottom:8px; font-size:14px; color:var(--ink);
+  }
+  .req-row .t{line-height:1.5;}
+  .req-row .kind{display:block; font-size:12px; color:var(--muted); font-weight:700;}
+  .req-badge{
+    flex:0 0 auto; font-size:12px; font-weight:700; border-radius:20px;
+    padding:4px 12px; background:var(--accent-soft); color:var(--accent); white-space:nowrap;
+  }
+  .req-badge.done{background:var(--bg2); color:var(--ink);}
+  .req-badge.wait{background:var(--card); color:var(--accent); border:1px solid var(--frame);}
+  .verdict{
+    background:var(--accent-soft); border:1.5px solid var(--frame); border-radius:14px;
+    padding:14px; font-size:14.5px;
+  }
+  .verdict b{color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>אישור קליטה וסטטוס בקשה</h1>
+  <p class="sub">דיווח i1788047242017-dhik · 30.8.2026</p>
+  <div class="why">
+    <p><b>מה יש היום.</b> אחרי שליחה מופיעה שורת טקסט קטנה (13.5px) בתחתית החלונית,
+      "✓ נשמר — ייכנס לטיפול היומי", והחלונית נסגרת לבד אחרי 1.4 שניות. אם הסתכלת
+      רגע הצידה, פספסת.</p>
+    <p><b>ומה חסר באמת.</b> הסעיף "הבקשות שלי" במסך הבית מציג <b>רק בקשות מתכון</b>.
+      שני הדיווחים ששלחת אתמול הם "רעיון לשיפור" — הם לא מופיעים שם ולא יופיעו אף פעם.
+      לכן זה נראה כאילו הם נעלמו.</p>
+    <p>שני תיקונים נפרדים, לכן שני חלקים.</p>
+  </div>
+
+  <div class="opt">
+    <h2>א · האישור הופך למסך, לא לשורה</h2>
+    <p class="note">אחרי שליחה מוצלחת גוף החלונית מתחלף במסך אישור. נסגר בלחיצה שלך,
+      לא בטיימר — אתה קובע מתי ראית.</p>
+    <div class="screen">
+      <div class="sheet">
+        <div class="tick">✓</div>
+        <h3>הדיווח נקלט</h3>
+        <p>נשמר בספר. קלוד עובר על הדיווחים כל בוקר ב-6:30.</p>
+        <p class="meta">מספר דיווח i1788047242017 · רעיון לשיפור</p>
+        <button class="sheet-btn">סגור</button>
+      </div>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin:12px 0 0">
+        ↓ מה שיש היום, לשם השוואה</p>
+      <div class="sheet" style="margin-top:8px;text-align:right">
+        <div style="font-size:14px">פירוט (לא חובה)</div>
+        <div style="border:1px solid var(--line);border-radius:12px;height:60px;
+                    background:#fffdf8;margin-top:6px"></div>
+        <div class="old-msg">✓ נשמר — ייכנס לטיפול היומי</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <h2>ב · הסעיף במסך הבית מציג גם דיווחים</h2>
+    <p class="note">"הבקשות שלי" ← "הבקשות והדיווחים שלי". כל שורה אומרת מה שלחת
+      ומה קרה איתה. ארבעה מצבים במקום שניים.</p>
+    <div class="screen">
+      <div class="section-label">הבקשות והדיווחים שלי</div>
+      <div class="req-row">
+        <span class="t"><span class="kind">רעיון לשיפור</span>
+          חיווי חיובי שהבקשה נקלטה</span>
+        <span class="req-badge wait">ממתין לאישורך</span>
+      </div>
+      <div class="req-row">
+        <span class="t"><span class="kind">רעיון לשיפור</span>
+          העלאת מתכון מקובץ PDF</span>
+        <span class="req-badge wait">ממתין לאישורך</span>
+      </div>
+      <div class="req-row">
+        <span class="t"><span class="kind">כמויות נראות שגויות</span>
+          הפירוק של התבלינים</span>
+        <span class="req-badge">אצל צ'אט המתכונים</span>
+      </div>
+      <div class="req-row">
+        <span class="t"><span class="kind">בקשת מתכון</span>
+          קדירת עוף ולימון כבוש</span>
+        <span class="req-badge done">טופל</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="verdict">
+    <b>ההמלצה שלי: לעשות את שניהם.</b> א' לבד יגיד לך שנקלט אבל לא מה קרה אחר כך;
+    ב' לבד ישאיר אותך מנחש ברגע השליחה. יחד נסגר הלולאה: שלחת → ראית שנקלט →
+    אתה יכול לבדוק מתי שבא לך. אם צריך לבחור אחד, <b>ב' חשוב יותר</b> — שם הדיווחים
+    שלך באמת נעלמים היום.
+  </div>
+</div>
+</body>
+</html>

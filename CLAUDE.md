@@ -152,6 +152,26 @@ Non-negotiables in the client (each fails silently if broken):
 * Stop dictation BEFORE resetting the form, or a late result refills the box.
 * A category with no text is a valid report — the client sends `[<category label>]`.
 
+**The request sheet does two jobs (changed 2026-08-30).** `openRequest()` opens the same
+sheet with a segmented control: *בקשת מתכון* (ask Claude) or *העלאת PDF* (import a PDF you
+already have). The upload side does **not** re-implement the PDF pipeline — `rpPickPdf()`
+closes the sheet, calls `openAdd()` and clicks `#pdfInput`, so `onFileChosen()` in the add
+view stays the only parser. Keep that handoff synchronous: iOS opens a file picker only
+inside a user gesture, and an `await` before `.click()` silently does nothing.
+Gal filed this as a missing feature (i1788047202706-47bq) while it already existed behind
+the unlabelled round `+` — the defect was discoverability, not capability. The `+` FAB
+still works and is unchanged.
+
+**Sending shows a confirmation state, not a toast (changed 2026-08-30).** `rpShowDone()`
+hides the form and shows `#rpDone` with the row id; it closes on Gal's tap. The old
+version printed 13.5px of green text and auto-closed after 1400ms, and Gal reported never
+seeing it (i1788047242017-dhik). Do not reintroduce a timer here.
+Same issue: `renderRequests()` used to filter `category === 'request'`, so bug reports and
+ideas appeared nowhere after sending and looked lost. It now lists every row, newest
+first, with four states — `new` → ממתין, `awaiting approval` → ממתין לאישורך,
+`awaiting kitchen` → אצל צ'אט המתכונים, anything else → טופל. **A new status value written
+by the triage task must be added to `RQ_STATES` or it silently renders as טופל.**
+
 `gal-recipe-issue-triage` (daily 06:30) drains rows where `status` is `new`: views the
 screenshot, scopes to the reported device unless the defect is cross-cutting, fixes bugs
 in place, prepares features as mockups under `mockups/<issue-id>.html` and waits for Gal,

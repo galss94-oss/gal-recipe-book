@@ -239,12 +239,16 @@
     padding:11px 12px; margin-bottom:8px; font-size:14px; color:var(--ink);
   }
   .req-row .t{line-height:1.5;}
+  /* --muted on --card measures 5.11:1 - AA clear. Never put --muted on --bg2 (4.23:1). */
+  .req-row .kind{display:block; font-size:12px; font-weight:700; color:var(--muted);}
   .req-badge{
     flex:0 0 auto; font-size:12px; font-weight:700; border-radius:20px;
     padding:4px 12px; background:var(--accent-soft); color:var(--accent);
+    white-space:nowrap;
   }
   /* --muted on --bg2 measures 4.23:1, below AA - the handled badge uses --ink (9.6:1) */
   .req-badge.done{background:var(--bg2); color:var(--ink);}
+  .req-badge.wait{background:var(--card); color:var(--accent); border:1px solid var(--frame);}
   #rpDish{
     width:100%; min-height:46px; padding:12px; border:1px solid var(--line);
     border-radius:12px; font-size:16px; font-family:inherit;
@@ -517,6 +521,34 @@
   .rp-send:disabled{opacity:.55;}
   .rp-msg{margin-top:10px; font-size:13.5px; font-weight:700; text-align:center; min-height:20px; line-height:1.6;}
   .rp-msg.ok{color:#3f7d3a;} .rp-msg.err{color:#b03a2e;}
+  /* request sheet: choose between asking for a recipe and uploading an existing PDF */
+  .rp-seg{display:flex; gap:8px; margin:0 0 14px;}
+  .rp-seg-btn{
+    flex:1; min-height:46px; padding:10px 8px; cursor:pointer;
+    border:1.5px solid var(--line); border-radius:14px;
+    background:var(--card); color:var(--ink);
+    font-size:14.5px; font-weight:800; font-family:inherit;
+  }
+  .rp-seg-btn.on{background:var(--accent-soft); color:var(--accent); border-color:var(--frame);}
+  .rp-up-drop{
+    width:100%; border:2px dashed var(--frame); border-radius:16px;
+    background:var(--accent-soft); color:var(--accent); text-align:center;
+    padding:26px 14px; min-height:100px; cursor:pointer;
+    font-size:16px; font-weight:800; font-family:inherit;
+  }
+  .rp-up-drop span{display:block; margin-top:6px; font-size:13.5px; font-weight:600; color:var(--ink);}
+  .rp-up-hint{font-size:13.5px; color:var(--ink); line-height:1.6; margin:12px 0 0;}
+  /* confirmation state - replaces the old 1.4s toast, closed by Gal not by a timer */
+  .rp-done{text-align:center; padding:6px 0 2px;}
+  .rp-done .tick{
+    width:56px; height:56px; border-radius:50%; margin:0 auto 12px;
+    background:var(--accent-soft); border:2px solid var(--frame);
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; color:var(--accent); font-weight:800;
+  }
+  .rp-done h3{margin:0 0 6px; font-size:18px; color:var(--accent);}
+  .rp-done p{margin:0 0 4px; font-size:14.5px; line-height:1.6; color:var(--ink);}
+  .rp-done .meta{font-size:13px; margin-top:10px;}
 </style>
 </head>
 <body>
@@ -569,6 +601,22 @@
       </div>
       <p class="rp-sub" id="rpSub">ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.</p>
 
+      <div class="rp-seg" id="rpSeg" style="display:none" role="group" aria-label="סוג הפעולה">
+        <button type="button" class="rp-seg-btn on" id="rpSegAsk"
+                onclick="rpSetReqMode('ask')">בקשת מתכון</button>
+        <button type="button" class="rp-seg-btn" id="rpSegUp"
+                onclick="rpSetReqMode('upload')">העלאת PDF</button>
+      </div>
+
+      <div id="rpUploadPane" style="display:none">
+        <button type="button" class="rp-up-drop" onclick="rpPickPdf()">
+          בחר קובץ PDF 📄
+          <span>אמלא לבד שם, תיאור, זמן וקטגוריה — תבדוק ותתקן לפני שמירה</span>
+        </button>
+        <p class="rp-up-hint">נדרש חיבור לאינטרנט. המתכון נשמר <b>במכשיר הזה בלבד</b> —
+          כדי שיופיע גם בטלפון וגם בטאבלט, שלח את ה-PDF לקלוד.</p>
+      </div>
+
       <div id="rpDishRow" style="display:none">
         <label for="rpDish">מה להכין?</label>
         <input type="text" id="rpDish" placeholder="ריזוטו פטריות" autocomplete="off">
@@ -578,7 +626,7 @@
       <div class="rp-cats" id="rpCats"></div>
 
       <label id="rpTextLabel">פירוט (לא חובה)</label>
-      <div class="rp-ta-wrap">
+      <div class="rp-ta-wrap" id="rpTaWrap">
         <textarea id="rpText" placeholder="מה קרה? אפשר גם להכתיב 🎤" aria-label="פירוט התקלה"></textarea>
         <button class="rp-mic" id="rpMic" onclick="rpToggleDictation()" aria-label="הכתבה">🎤</button>
       </div>
@@ -600,6 +648,14 @@
 
       <button class="rp-send" id="rpSend" onclick="rpSubmit()">שלח דיווח</button>
       <div class="rp-msg" id="rpMsg"></div>
+
+      <div class="rp-done" id="rpDone" style="display:none" role="status" aria-live="polite">
+        <div class="tick" aria-hidden="true">✓</div>
+        <h3 id="rpDoneTitle">הדיווח נקלט</h3>
+        <p id="rpDoneText"></p>
+        <p class="meta" id="rpDoneMeta"></p>
+        <button class="rp-send" id="rpDoneClose" onclick="closeReport()">סגור</button>
+      </div>
     </div>
   </div>
 </div>
@@ -628,10 +684,10 @@
       <button class="ask-btn" onclick="openRequest()">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-        בקשת מתכון חדש
+        בקשת מתכון · העלאת PDF
       </button>
       <div id="reqSection" style="display:none">
-        <div class="section-label">הבקשות שלי</div>
+        <div class="section-label">הבקשות והדיווחים שלי</div>
         <div id="reqList"></div>
       </div>
       <div id="favSection" style="display:none">
@@ -775,7 +831,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v22';
+const APP_VERSION = 'sw v23';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -970,9 +1026,22 @@ function renderStrips(){
   document.getElementById('favSection').style.display    = favN ? 'block' : 'none';
   document.getElementById('recentSection').style.display = recN ? 'block' : 'none';
 }
-/* "הבקשות שלי" — reads issues.json straight off Pages, no token needed. It is a
+/* "הבקשות והדיווחים שלי" — reads issues.json straight off Pages, no token needed. It is a
    nicety: any failure hides the section rather than showing an error on the home
-   screen. Requests are the only rows shown; reports stay out of Gal's way. */
+   screen.
+
+   Until 2026-08-30 this filtered `category === 'request'`, so a bug report or an idea
+   never appeared anywhere after sending and looked like it had vanished. Gal filed
+   i1788047242017-dhik about exactly that. Every row is shown now, newest first. */
+const RQ_STATES = {
+  'new':               {t:'ממתין',              c:''},
+  'awaiting approval': {t:'ממתין לאישורך',      c:' wait'},
+  'awaiting kitchen':  {t:"אצל צ'אט המתכונים",  c:' wait'}
+};
+function rqState(s){
+  // anything else is a "done <date>" row written by the daily triage
+  return RQ_STATES[String(s || '')] || {t:'טופל', c:' done'};
+}
 async function renderRequests(){
   const sec = document.getElementById('reqSection');
   const host = document.getElementById('reqList');
@@ -980,16 +1049,16 @@ async function renderRequests(){
     const r = await fetch('issues.json?t=' + Date.now(), {cache:'no-store'});
     if(!r.ok) throw new Error('http ' + r.status);
     const all = await r.json();
-    const reqs = (Array.isArray(all) ? all : [])
-      .filter(x => x && x.category === 'request').slice(-5).reverse();
-    if(!reqs.length){ sec.style.display = 'none'; return; }
+    const rows = (Array.isArray(all) ? all : []).filter(Boolean).slice(-6).reverse();
+    if(!rows.length){ sec.style.display = 'none'; return; }
     host.innerHTML = '';
-    reqs.forEach(x=>{
-      const pend = x.status === 'new';
+    rows.forEach(x=>{
+      const st = rqState(x.status);
+      const kind = x.categoryLabel || (x.category === 'request' ? 'בקשת מתכון' : 'דיווח');
       const d = document.createElement('div');
       d.className = 'req-row';
-      d.innerHTML = `<span class="t">${esc(x.text || '')}</span>` +
-        `<span class="req-badge${pend ? '' : ' done'}">${pend ? 'ממתין' : 'טופל'}</span>`;
+      d.innerHTML = `<span class="t"><span class="kind">${esc(kind)}</span>${esc(x.text || '')}</span>` +
+        `<span class="req-badge${st.c}">${esc(st.t)}</span>`;
       host.appendChild(d);
     });
     sec.style.display = 'block';
@@ -1512,10 +1581,46 @@ function rpRenderCtx(){
    Gal chose "saved only" over "also builds a NotebookLM prompt" so the prompt template
    stays in KITCHEN_MENTOR.md alone and cannot drift out of sync with the app. */
 function openRequest(){ openReport('request'); }
+/* The request sheet has two jobs since 2026-08-30 (issue i1788047202706-47bq): ask Claude
+   for a recipe, or upload a PDF you already have. Gal reported the upload as missing while
+   it existed - it sat behind an unlabelled round "+" that nothing explained. The PDF
+   pipeline itself is not duplicated here: rpPickPdf() hands off to the add view, which
+   already parses, auto-fills and saves. Keep it that way - one parser, one place. */
+const RP_FORM_IDS = ['rpDishRow','rpCatLabel','rpCats','rpTextLabel','rpTaWrap',
+                     'rpShotSection','rpCtx','rpSend','rpMsg'];
+function rpSetReqMode(which){
+  const up = which === 'upload';
+  document.getElementById('rpSegAsk').classList.toggle('on', !up);
+  document.getElementById('rpSegUp').classList.toggle('on', up);
+  document.getElementById('rpUploadPane').style.display = up ? '' : 'none';
+  if(up) rpStopDictation();          // a live mic under a hidden textarea refills it later
+  RP_FORM_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    // in ask mode restore what openReport() decided; only the upload mode force-hides
+    if(up) el.style.display = 'none';
+    else if(id === 'rpDishRow')       el.style.display = '';
+    else if(id === 'rpShotSection' || id === 'rpCtx') el.style.display = 'none';
+    else el.style.display = '';
+  });
+  document.getElementById('rpTitle').textContent = up ? 'העלאת מתכון מ-PDF' : 'בקשת מתכון חדש';
+  document.getElementById('rpSub').textContent = up
+    ? 'יש לך PDF של מתכון? אני אקרא אותו ואמלא את הפרטים.'
+    : 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.';
+}
+/* Must stay synchronous from the tap: iOS only opens a file picker inside a user gesture,
+   and an await anywhere before .click() silently does nothing. */
+function rpPickPdf(){
+  closeReport();
+  openAdd();
+  document.getElementById('pdfInput').click();
+}
 function openReport(mode){
   rpMode = (mode === 'request') ? 'request' : 'issue';
   const req = rpMode === 'request';
   const ov = document.getElementById('reportOverlay');
+  // rpShowDone() and upload mode both hide the form; put every row back before deciding
+  RP_FORM_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.style.display = ''; });
   document.getElementById('rpTitle').textContent = req ? 'בקשת מתכון חדש' : '⚑ דיווח על תקלה';
   document.getElementById('rpSub').textContent = req
     ? 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.'
@@ -1554,6 +1659,12 @@ function openReport(mode){
   document.getElementById('rpMsg').textContent = '';
   document.getElementById('rpMsg').className = 'rp-msg';
   document.getElementById('rpSend').disabled = false;
+  // always reopen on the form, never on a stale confirmation from the last send
+  document.getElementById('rpDone').style.display = 'none';
+  document.getElementById('rpSub').style.display = '';
+  document.getElementById('rpSeg').style.display = req ? 'flex' : 'none';
+  document.getElementById('rpUploadPane').style.display = 'none';
+  if(req) rpSetReqMode('ask');
   // hide the mic entirely when the browser has no speech API - a dead button is worse
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   document.getElementById('rpMic').classList.toggle('avail', !!SR);
@@ -1685,20 +1796,42 @@ async function rpSubmit(){
       const rc = [entry.category].concat(LS.get('rpRecentCats', []).filter(x=>x!==entry.category)).slice(0,4);
       LS.set('rpRecentCats', rc);
     }
-    msg.className = 'rp-msg ok';
-    msg.textContent = req ? '✓ הבקשה נשמרה' : '✓ נשמר — ייכנס לטיפול היומי';
+    msg.className = 'rp-msg'; msg.textContent = '';
     document.getElementById('rpText').value = '';
     document.getElementById('rpDish').value = '';
-    if(req && nav.view === 'home') renderRequests();
+    if(nav.view === 'home') renderRequests();
     rpClearShot(); rpCat = null;
     document.querySelectorAll('#rpCats .rp-cat').forEach(x=>x.classList.remove('on'));
-    setTimeout(closeReport, 1400);
+    rpShowDone(entry, req);
   }catch(e){
     msg.className = 'rp-msg err';
     msg.innerHTML = '✗ לא נשמר: ' + esc(String(e.message || e)) + '<br>הטקסט שלך נשאר כאן — נסה שוב.';
   }finally{
     btn.disabled = false;
   }
+}
+/* Confirmation is a state of the sheet, not a toast (issue i1788047242017-dhik).
+   The old version printed 13.5px of green text at the bottom and closed itself after
+   1400ms - Gal filed a report saying he never saw it. It now stays until he taps סגור,
+   and it names the row so he can find it again in "הבקשות והדיווחים שלי". */
+function rpShowDone(entry, req){
+  RP_FORM_IDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.style.display = 'none';
+  });
+  document.getElementById('rpSeg').style.display = 'none';
+  document.getElementById('rpUploadPane').style.display = 'none';
+  document.getElementById('rpSub').style.display = 'none';
+  document.getElementById('rpDoneTitle').textContent = req ? 'הבקשה נקלטה' : 'הדיווח נקלט';
+  document.getElementById('rpDoneText').textContent = req
+    ? 'נשמרה בספר. אני עובר על הבקשות כל בוקר.'
+    : 'נשמר בספר. אני עובר על הדיווחים כל בוקר ב-6:30.';
+  document.getElementById('rpDoneMeta').textContent =
+    'מספר ' + entry.id + (entry.categoryLabel ? ' · ' + entry.categoryLabel : '');
+  const done = document.getElementById('rpDone');
+  done.style.display = '';
+  done.scrollIntoView({block:'nearest'});
+  document.getElementById('rpDoneClose').focus();
 }
 
 /* ---------- Lightbox ---------- */

@@ -549,6 +549,16 @@
   .rp-done h3{margin:0 0 6px; font-size:18px; color:var(--accent);}
   .rp-done p{margin:0 0 4px; font-size:14.5px; line-height:1.6; color:var(--ink);}
   .rp-done .meta{font-size:13px; margin-top:10px;}
+  /* "send to every device": uploads the PDF to inbox/ for the daily task to import */
+  .push-btn{
+    width:100%; min-height:48px; margin-top:10px; padding:12px; cursor:pointer;
+    border:1.5px solid var(--frame); border-radius:15px;
+    background:var(--accent-soft); color:var(--accent);
+    font-size:16px; font-weight:800; font-family:inherit;
+  }
+  .push-btn:disabled{opacity:.55;}
+  .push-msg{margin-top:10px; font-size:13.5px; font-weight:700; text-align:center; line-height:1.6;}
+  .push-msg.ok{color:#3f7d3a;} .push-msg.err{color:#b03a2e;}
 </style>
 </head>
 <body>
@@ -775,9 +785,13 @@
         <label>קטגוריה</label>
         <select id="catSelect" onchange="onCatSelect('catSelect','newCatInput')"></select>
         <input type="text" class="new-cat-input" id="newCatInput" placeholder="שם קטגוריה חדשה">
-        <button class="primary-btn" id="saveBtn" onclick="saveNewRecipe()">שמור מתכון</button>
+        <button class="primary-btn" id="saveBtn" onclick="saveNewRecipe()">שמור במכשיר הזה</button>
+        <button class="push-btn" id="pushBtn" onclick="pushRecipeToInbox()">שלח לכל המכשירים ☁︎</button>
+        <div class="push-msg" id="pushMsg"></div>
       </div>
-      <p class="hint">💡 בחר PDF ואזהה עבורך את השם, התיאור, הזמן והקטגוריה — בדוק ותקן לפני שמירה. נדרש חיבור לאינטרנט. המתכון נשמר במכשיר זה בלבד; כדי שיופיע בכל המכשירים, שלח את ה-PDF לקלוד.</p>
+      <p class="hint">💡 בחר PDF ואזהה עבורך את השם, התיאור, הזמן והקטגוריה — בדוק ותקן לפני ששולחים.<br>
+        <b>שמור במכשיר הזה</b> — מיידי, אבל רק כאן.<br>
+        <b>שלח לכל המכשירים</b> — ה-PDF עולה לספר, ואני מכניס אותו בבוקר. יופיע בטלפון ובטאבלט.</p>
     </div>
   </section>
 
@@ -831,13 +845,14 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v23';
+const APP_VERSION = 'sw v24';
 let BUILTIN = [];
 
 let userRecipes = [];
 let overrides = {};
 let nav = {view:'home', cat:null, recipe:null};
 let pendingPages = null;
+let pendingPdfFile = null;   // the original PDF, kept so it can be pushed to inbox/
 let ocrToken = 0;
 let wakeLock = null;
 let fallbackPages = null;   // lazily loaded from recipes.json if a page image is missing
@@ -1942,8 +1957,13 @@ async function saveEdit(){
 
 /* ---------- Add recipe (auto-fill) ---------- */
 function openAdd(){
-  pendingPages = null; ocrToken++;
+  pendingPages = null; pendingPdfFile = null; ocrToken++;
   document.getElementById('pdfInput').value = '';
+  // a "נשלח ✓" left over from the last upload would lie about this one
+  const pm = document.getElementById('pushMsg');
+  pm.textContent = ''; pm.className = 'push-msg';
+  const pb = document.getElementById('pushBtn');
+  pb.disabled = false; pb.textContent = 'שלח לכל המכשירים ☁︎';
   const d = document.getElementById('fileDrop');
   d.innerHTML = 'בחר קובץ PDF 📄<br><span style="font-size:13px;font-weight:400">אמלא את שאר הפרטים אוטומטית</span>';
   d.classList.remove('small');
@@ -1996,6 +2016,9 @@ async function onFileChosen(){
     }
     if(token!==ocrToken) return;
     pendingPages = pages;
+    // the File itself, not a base64 copy: pushRecipeToInbox() encodes it only if Gal
+    // actually sends it, so a 5 MB PDF does not sit in memory next to the decoded pages
+    pendingPdfFile = f;
     // show form immediately with filename fallback
     const ti = document.getElementById('titleInput');
     if(!ti.dataset.dirty) ti.value = f.name.replace(/\.pdf$/i,'').replace(/[_-]+/g,' ').trim();
@@ -2073,6 +2096,63 @@ async function saveNewRecipe(){
   await putRecipe(rec);
   await loadStores();
   renderCategory(cat);
+}
+/* "Send to every device" (Gal's ask, 2026-08-30). A recipe saved here lands in IndexedDB
+   on one device only. This pushes the ORIGINAL PDF to inbox/<id>.pdf plus a sidecar
+   inbox/<id>.json holding the fields Gal just reviewed on screen, and the daily task
+   imports it into recipes.json, runs build.py and deletes both files.
+
+   Why the original PDF and not the rendered pages: it is the source. If the page width or
+   quality rules change later, the recipe can be rebuilt without asking Gal for the file
+   again. Why from this view and not from the request sheet: the auto-detected title,
+   description, time and category are visible and editable here, so an unattended task
+   never has to guess them. Keep it that way. */
+function fileToB64(file){
+  return new Promise((resolve, reject)=>{
+    const fr = new FileReader();
+    fr.onerror = ()=>reject(new Error('קריאת הקובץ נכשלה'));
+    fr.onload  = ()=>resolve(String(fr.result).split(',')[1]);
+    fr.readAsDataURL(file);
+  });
+}
+const INBOX_MAX = 20 * 1024 * 1024;   // GitHub's Contents API tops out well above this;
+                                      // the real limit is base64 in a phone's memory
+async function pushRecipeToInbox(){
+  const msg = document.getElementById('pushMsg');
+  const btn = document.getElementById('pushBtn');
+  const fail = t=>{ msg.className = 'push-msg err'; msg.innerHTML = t; };
+  const title = document.getElementById('titleInput').value.trim();
+  const desc  = document.getElementById('descInput').value.trim();
+  const cat   = readCat('catSelect','newCatInput');
+  const t     = parseInt(document.getElementById('timeInput').value, 10);
+  msg.className = 'push-msg'; msg.textContent = '';
+  if(!pendingPdfFile) return fail('בחר קובץ PDF');
+  if(!title)          return fail('הזן שם למתכון');
+  if(!cat)            return fail('בחר או הזן קטגוריה');
+  if(!ghToken())      return fail('לא ניתן לשלוח — חסר טוקן GitHub.<br>הגדר אותו ב-⚙︎ ונסה שוב.');
+  if(pendingPdfFile.size > INBOX_MAX)
+    return fail('הקובץ גדול מדי (' + Math.round(pendingPdfFile.size/1048576) + ' MB).<br>' +
+                'עד 20 MB. שמור אותו במכשיר הזה ושלח לי אותו ישירות.');
+  btn.disabled = true;
+  msg.textContent = 'מעלה את ה-PDF...';
+  const id = 'p' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  try{
+    const b64 = await fileToB64(pendingPdfFile);
+    // PDF first: a sidecar with no file is a broken row, a file with no sidecar is inert
+    await ghPutBinary('inbox/' + id + '.pdf', b64, 'Inbox PDF: ' + title);
+    await ghPutFile('inbox/' + id + '.json', {
+      id, title, desc, category: cat, time: (t > 0 ? t : null),
+      file: 'inbox/' + id + '.pdf', pageCount: (pendingPages || []).length,
+      status: 'new', ts: new Date().toISOString(),
+      device: rpDevice().text, version: APP_VERSION
+    }, null, 'Inbox meta: ' + title);
+    msg.className = 'push-msg ok';
+    msg.innerHTML = '✓ נשלח. אכניס אותו לספר בבוקר —<br>אחר כך הוא יופיע בכל המכשירים.';
+    btn.textContent = 'נשלח ✓';
+  }catch(e){
+    fail('✗ לא נשלח: ' + esc(String(e.message || e)) + '<br>הפרטים נשארו כאן — נסה שוב.');
+    btn.disabled = false;
+  }
 }
 
 /* ---------- Utils ---------- */

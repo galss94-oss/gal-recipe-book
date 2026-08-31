@@ -64,3 +64,15 @@ first, with four states — `new` → ממתין, `awaiting approval` → ממת
 `awaiting kitchen` → אצל צ'אט המתכונים, anything else → טופל. **A new status value written
 by the triage task must be added to `RQ_STATES` or it silently renders as טופל.**
 
+## The inbox — also this task's queue (added 2026-08-31)
+
+`gal-recipe-issue-triage` drains two queues, not one: `issues.json` (bug and feature reports)
+and `inbox/` (PDFs Gal pushed from his phone with "שלח לכל המכשירים").
+
+The client half writes `inbox/<id>.pdf` plus `inbox/<id>.json`. `import_inbox.py` is the other
+half and works — but until 2026-08-31 nothing called it, so uploads sat in `inbox/` forever
+while the button told Gal "✓ נשלח. אכניס אותו לספר בבוקר". The task prompt now drains it.
+
+Render geometry, the sidecar format, and the failure handling live in `docs/CONTENT.md`
+under "Inbox". Read that section only when an import fails or you are changing the importer —
+`import_inbox.py --dry-run` tells you what it would do without touching anything.

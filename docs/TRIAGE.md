@@ -64,6 +64,19 @@ first, with four states — `new` → ממתין, `awaiting approval` → ממת
 `awaiting kitchen` → אצל צ'אט המתכונים, anything else → טופל. **A new status value written
 by the triage task must be added to `RQ_STATES` or it silently renders as טופל.**
 
+**The list is not on the home screen any more (changed 2026-09-02, i1788153988954-3pes).**
+Six rows took ~480px at 402×874, so the categories, the favourites and "בישלת לאחרונה" all
+sat below the fold and the book opened on no recipes. Gal was shown three mockups and chose
+**option B: home carries zero reports.** `renderRequests()` now fills `#reqList` inside
+`#reportOverlay`, under a "הבקשות שלי" tab next to "דיווח חדש", and renders **every** row —
+the cap of six existed only because the list was competing with the recipes.
+The single entry point is ⚑, so `refreshReportBadge()` puts a count on that button; it counts
+`awaiting approval` only. A `new` row is waiting on this task, not on Gal, and badging it
+would teach him to ignore the badge — which matters more than usual now, because with the
+home screen clear a mockup he never opens is invisible. The tabs are shown only in the ⚑
+flow: `openRequest()` already uses `.rp-seg` for ask/upload, and two stacked segmented
+controls read as one broken one.
+
 ## The inbox — also this task's queue (added 2026-08-31)
 
 `gal-recipe-issue-triage` drains two queues, not one: `issues.json` (bug and feature reports)

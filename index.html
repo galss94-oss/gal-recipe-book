@@ -444,7 +444,16 @@
   }
 
   /* ---- Report an issue ---- */
-  .flag-btn{border-color:var(--accent2); background:var(--accent-soft);}
+  .flag-btn{border-color:var(--accent2); background:var(--accent-soft); position:relative;}
+  /* Option B (2026-09-02, issue i1788153988954-3pes): the home screen carries no reports at
+     all now, so this count is the only thing telling Gal something is waiting on his answer.
+     #fff on --accent measures 5.83:1. Decorative on purpose - the count is also written into
+     the button's aria-label, so a screen reader does not depend on the glyph. */
+  .flag-badge{
+    position:absolute; top:-3px; left:-3px; min-width:19px; height:19px; padding:0 5px;
+    border-radius:10px; background:var(--accent); color:#fff; border:2px solid var(--bg);
+    font-size:11px; font-weight:800; line-height:15px; text-align:center; pointer-events:none;
+  }
   #reportOverlay{
     position:fixed; inset:0; z-index:80; display:none;
     background:linear-gradient(180deg,#f9f3e6 0%, #efe4d0 100%);
@@ -609,7 +618,19 @@
         <h2 id="rpTitle">⚑ דיווח על תקלה</h2>
         <button class="edit-btn" onclick="closeReport()">סגור</button>
       </div>
+      <div class="rp-seg" id="rpTabs" style="display:none" role="group" aria-label="דיווח או רשימה">
+        <button type="button" class="rp-seg-btn on" id="rpTabNew"
+                onclick="rpSetTab('new')">דיווח חדש</button>
+        <button type="button" class="rp-seg-btn" id="rpTabList"
+                onclick="rpSetTab('list')">הבקשות שלי</button>
+      </div>
+
       <p class="rp-sub" id="rpSub">ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.</p>
+
+      <div id="rpListPane" style="display:none">
+        <div id="reqList"></div>
+        <p class="rp-up-hint" id="rpListEmpty" style="display:none"></p>
+      </div>
 
       <div class="rp-seg" id="rpSeg" style="display:none" role="group" aria-label="סוג הפעולה">
         <button type="button" class="rp-seg-btn on" id="rpSegAsk"
@@ -696,10 +717,11 @@
              stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
         בקשת מתכון · העלאת PDF
       </button>
-      <div id="reqSection" style="display:none">
-        <div class="section-label">הבקשות והדיווחים שלי</div>
-        <div id="reqList"></div>
-      </div>
+      <!-- The reports list used to sit here. Gal filed i1788153988954-3pes: six rows of it
+           (~480px) pushed the categories, the favourites and "בישלת לאחרונה" below the fold,
+           so a recipe book opened on no recipes. He chose option B from the mockup on
+           2026-09-02: home carries zero reports, and ⚑ is the only way in. The list markup
+           now lives inside #reportOverlay under the "הבקשות שלי" tab. -->
       <div id="favSection" style="display:none">
         <div class="section-label">המועדפים שלי</div>
         <div class="strip" id="favStrip"></div>
@@ -845,7 +867,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v24';
+const APP_VERSION = 'sw v25';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -1057,32 +1079,73 @@ function rqState(s){
   // anything else is a "done <date>" row written by the daily triage
   return RQ_STATES[String(s || '')] || {t:'טופל', c:' done'};
 }
+async function loadIssues(){
+  const r = await fetch('issues.json?t=' + Date.now(), {cache:'no-store'});
+  if(!r.ok) throw new Error('http ' + r.status);
+  const all = await r.json();
+  return (Array.isArray(all) ? all : []).filter(Boolean);
+}
+/* Option B, 2026-09-02 (i1788153988954-3pes). This used to render six rows into #reqSection
+   on the home screen; it renders every row into the ⚑ sheet now, newest first. The cap of
+   six was there because the list was competing with the recipes for the first screen. It
+   isn't any more, and truncating a list nobody can page through only hides old decisions. */
 async function renderRequests(){
-  const sec = document.getElementById('reqSection');
   const host = document.getElementById('reqList');
+  const empty = document.getElementById('rpListEmpty');
+  host.innerHTML = '';
+  let rows;
   try{
-    const r = await fetch('issues.json?t=' + Date.now(), {cache:'no-store'});
-    if(!r.ok) throw new Error('http ' + r.status);
-    const all = await r.json();
-    const rows = (Array.isArray(all) ? all : []).filter(Boolean).slice(-6).reverse();
-    if(!rows.length){ sec.style.display = 'none'; return; }
-    host.innerHTML = '';
-    rows.forEach(x=>{
-      const st = rqState(x.status);
-      const kind = x.categoryLabel || (x.category === 'request' ? 'בקשת מתכון' : 'דיווח');
-      const d = document.createElement('div');
-      d.className = 'req-row';
-      d.innerHTML = `<span class="t"><span class="kind">${esc(kind)}</span>${esc(x.text || '')}</span>` +
-        `<span class="req-badge${st.c}">${esc(st.t)}</span>`;
-      host.appendChild(d);
-    });
-    sec.style.display = 'block';
-  }catch(e){ sec.style.display = 'none'; }
+    rows = (await loadIssues()).reverse();
+  }catch(e){
+    empty.textContent = 'לא הצלחתי לטעון את הרשימה. בדוק חיבור ונסה שוב.';
+    empty.style.display = '';
+    return;
+  }
+  if(!rows.length){
+    empty.textContent = 'עוד לא שלחת דיווח או בקשה.';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  rows.forEach(x=>{
+    const st = rqState(x.status);
+    const kind = x.categoryLabel || (x.category === 'request' ? 'בקשת מתכון' : 'דיווח');
+    const d = document.createElement('div');
+    d.className = 'req-row';
+    d.innerHTML = `<span class="t"><span class="kind">${esc(kind)}</span>${esc(x.text || '')}</span>` +
+      `<span class="req-badge${st.c}">${esc(st.t)}</span>`;
+    host.appendChild(d);
+  });
+}
+/* The count on ⚑. Only "awaiting approval" counts: with home cleared, a mockup waiting on
+   Gal's decision is the one thing that can now sit unseen for a week. A "new" row is waiting
+   on the triage task, not on him, and badging it would train him to ignore the badge. */
+async function refreshReportBadge(){
+  const btn = document.getElementById('reportBtn');
+  if(!btn) return;
+  let n = 0;
+  try{
+    n = (await loadIssues()).filter(x => x.status === 'awaiting approval').length;
+  }catch(e){ return; }        // offline: leave whatever is on screen, never show a wrong 0
+  let b = btn.querySelector('.flag-badge');
+  if(!n){
+    if(b) b.remove();
+    btn.setAttribute('aria-label', 'דיווח על תקלה');
+    return;
+  }
+  if(!b){
+    b = document.createElement('span');
+    b.className = 'flag-badge';
+    b.setAttribute('aria-hidden', 'true');
+    btn.appendChild(b);
+  }
+  b.textContent = n > 9 ? '9+' : String(n);
+  btn.setAttribute('aria-label', 'דיווח על תקלה · ' + n + ' ממתין לאישורך');
 }
 function renderHome(){
   nav = {view:'home'};
   renderStrips();
-  renderRequests();
+  refreshReportBadge();     // home shows no reports since 2026-09-02; the ⚑ count is the signal
   const g = document.getElementById('catGrid');
   g.innerHTML = '';
   const cats = categories();
@@ -1623,6 +1686,28 @@ function rpSetReqMode(which){
     ? 'יש לך PDF של מתכון? אני אקרא אותו ואמלא את הפרטים.'
     : 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.';
 }
+/* Option B, 2026-09-02 (i1788153988954-3pes): the reports list lives in this sheet and
+   nowhere else, so the ⚑ flow needs a way to reach it. Only the ⚑ flow gets these tabs -
+   openRequest() already owns .rp-seg for ask/upload, and two segmented controls stacked in
+   one card read as one broken control. */
+const RP_TAB_HIDE = RP_FORM_IDS.concat(['rpSub','rpSeg','rpUploadPane']);
+function rpSetTab(which){
+  const list = which === 'list';
+  document.getElementById('rpTabNew').classList.toggle('on', !list);
+  document.getElementById('rpTabList').classList.toggle('on', list);
+  if(list) rpStopDictation();     // a live mic under a hidden textarea refills it later
+  RP_TAB_HIDE.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    // the issue flow never shows the dish row, the ask/upload segment or the upload pane
+    if(list || id === 'rpDishRow' || id === 'rpSeg' || id === 'rpUploadPane') el.style.display = 'none';
+    else el.style.display = '';
+  });
+  document.getElementById('rpDone').style.display = 'none';
+  document.getElementById('rpListPane').style.display = list ? '' : 'none';
+  document.getElementById('rpTitle').textContent = list ? 'הבקשות והדיווחים שלי' : '⚑ דיווח על תקלה';
+  if(list) renderRequests();
+}
 /* Must stay synchronous from the tap: iOS only opens a file picker inside a user gesture,
    and an await anywhere before .click() silently does nothing. */
 function rpPickPdf(){
@@ -1679,7 +1764,11 @@ function openReport(mode){
   document.getElementById('rpSub').style.display = '';
   document.getElementById('rpSeg').style.display = req ? 'flex' : 'none';
   document.getElementById('rpUploadPane').style.display = 'none';
+  // ⚑ always reopens on the form tab, never on a stale list from the last visit
+  document.getElementById('rpTabs').style.display = req ? 'none' : 'flex';
+  document.getElementById('rpListPane').style.display = 'none';
   if(req) rpSetReqMode('ask');
+  else    rpSetTab('new');
   // hide the mic entirely when the browser has no speech API - a dead button is worse
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   document.getElementById('rpMic').classList.toggle('avail', !!SR);
@@ -1814,7 +1903,7 @@ async function rpSubmit(){
     msg.className = 'rp-msg'; msg.textContent = '';
     document.getElementById('rpText').value = '';
     document.getElementById('rpDish').value = '';
-    if(nav.view === 'home') renderRequests();
+    refreshReportBadge();   // the list itself refetches whenever the "הבקשות שלי" tab opens
     rpClearShot(); rpCat = null;
     document.querySelectorAll('#rpCats .rp-cat').forEach(x=>x.classList.remove('on'));
     rpShowDone(entry, req);

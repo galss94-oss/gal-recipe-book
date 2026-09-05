@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>הגדרות אישיות והרשאות משתמשים — הצעה</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 3px 12px rgba(66,51,42,.10);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Arial Hebrew","Noto Sans Hebrew",sans-serif;
+    padding:calc(env(safe-area-inset-top) + 14px) 14px calc(env(safe-area-inset-bottom) + 28px);
+    font-size:16px; line-height:1.6;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  h1{font-size:20px; margin:0 0 6px;}
+  .sub{color:var(--muted); font-size:14.5px; margin:0;}
+  .why{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin:16px 0 22px; box-shadow:var(--shadow);
+  }
+  .why b{color:var(--accent);}
+  .why p{margin:0 0 8px;}
+  .why p:last-child{margin:0;}
+  h2.sec{font-size:17px; margin:26px 0 10px; color:var(--accent);}
+
+  /* ---- phone frame: the proposed screen, at 402px ---- */
+  .phone{
+    width:402px; max-width:100%; margin:0 auto;
+    border:1.5px solid var(--frame); border-radius:22px; overflow:hidden;
+    box-shadow:var(--shadow); background:linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  }
+  .ph-head{
+    background:rgba(246,239,226,.9); border-bottom:1px solid var(--line);
+    padding:12px 16px; display:flex; align-items:center; gap:10px; min-height:52px;
+  }
+  .ph-head h3{font-size:18px; margin:0; flex:1; font-weight:800;}
+  .back-btn{
+    border:1px solid var(--line); background:var(--card); color:var(--accent);
+    font-size:15px; font-weight:700; padding:0 16px; border-radius:22px;
+    min-height:44px; display:flex; align-items:center; font-family:inherit;
+  }
+  .ph-body{padding:14px;}
+
+  .form-card{
+    background:var(--card); border:1.5px solid var(--frame); border-radius:18px;
+    padding:20px; box-shadow:var(--shadow); margin-bottom:16px;
+  }
+  .form-card > .card-title{font-size:15px; font-weight:800; color:var(--accent); margin:0 0 4px;}
+  .form-card > .card-sub{font-size:13.5px; color:var(--muted); margin:0 0 14px;}
+  .form-card label{display:block; font-weight:800; font-size:14px; margin:16px 0 6px; color:#5b3a1e;}
+  .form-card label.first{margin-top:0;}
+  .form-card input[type=text], .form-card select{
+    width:100%; padding:12px; border:1px solid var(--line); border-radius:12px;
+    font-size:16px; font-family:inherit; background:#fffdf8; color:var(--ink);
+  }
+  .set-hint{font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.6;}
+  .note-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px;}
+  .primary-btn{
+    width:100%; margin-top:20px; padding:14px; border:none; border-radius:14px;
+    background:linear-gradient(160deg, var(--accent2), var(--accent)); color:#fff;
+    font-size:17px; font-weight:800; font-family:inherit; min-height:44px;
+    box-shadow:0 3px 10px rgba(163,76,23,.3);
+  }
+  .edit-btn{
+    border:1px solid var(--frame); background:var(--card); color:var(--accent);
+    font-size:14.5px; font-weight:700; padding:0 18px; border-radius:22px;
+    font-family:inherit; box-shadow:var(--shadow); min-height:44px;
+  }
+  .seg{display:flex; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fffdf8;}
+  .seg button{
+    flex:1; min-height:44px; border:none; background:none; font-family:inherit;
+    font-size:15px; font-weight:700; color:var(--accent); cursor:pointer;
+    border-inline-start:1px solid var(--line);
+  }
+  .seg button:first-child{border-inline-start:none;}
+  .seg button[aria-pressed="true"]{background:var(--accent-soft);}
+
+  .sw-row{
+    display:flex; align-items:center; gap:12px; min-height:52px;
+    border-top:1px solid var(--line); padding:6px 0;
+  }
+  .sw-row:first-of-type{border-top:none;}
+  .sw-row .t{flex:1;}
+  .sw-row .t b{display:block; font-size:15px; font-weight:800;}
+  .sw-row .t span{display:block; font-size:13.5px; color:var(--muted); line-height:1.45;}
+  .sw{
+    flex:0 0 auto; width:52px; height:32px; border-radius:20px; border:1px solid var(--frame);
+    background:var(--line); position:relative;
+  }
+  .sw.on{background:var(--accent);}
+  .sw i{
+    position:absolute; top:2px; inset-inline-start:2px; width:26px; height:26px;
+    border-radius:50%; background:#fff; box-shadow:var(--shadow);
+  }
+  .sw.on i{inset-inline-start:auto; inset-inline-end:2px;}
+
+  .ro{
+    background:var(--accent-soft); border:1px solid var(--frame); border-radius:12px;
+    padding:12px; font-size:14.5px; line-height:1.6;
+  }
+  .ro b{color:var(--accent);}
+  .ppl{list-style:none; margin:12px 0 0; padding:0; font-size:15px;}
+  .ppl li{
+    display:flex; align-items:center; gap:10px; min-height:44px;
+    border-top:1px solid var(--line); padding:4px 0;
+  }
+  .ppl li:first-child{border-top:none;}
+  .ppl .em{flex:1; direction:ltr; text-align:right; font-size:14.5px; color:var(--muted);}
+  .tag{
+    font-size:12.5px; font-weight:800; border-radius:20px; padding:3px 11px;
+    background:var(--card); color:var(--accent); border:1px solid var(--frame);
+  }
+  .ideas{margin:0; padding:0; list-style:none;}
+  .ideas li{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:12px 14px; margin-bottom:10px; box-shadow:var(--shadow);
+  }
+  .ideas b{display:block; font-size:15.5px; color:var(--accent);}
+  .ideas span.d{display:block; font-size:14.5px; color:var(--muted);}
+  .cost{
+    display:inline-block; font-size:12.5px; font-weight:800; border-radius:20px;
+    padding:2px 10px; background:var(--accent-soft); color:var(--accent); margin-top:6px;
+  }
+  .foot{font-size:13.5px; color:var(--muted); margin-top:24px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>הגדרות אישיות והרשאות — הצעה</h1>
+  <p class="sub">דיווח i1788503840638-oy63 · מוקאפ בלבד, לא מומש</p>
+
+  <div class="why">
+    <p><b>מה ביקשת:</b> להוסיף הגדרות אישיות למסך ההגדרות, ולנהל הרשאות של משתמשים חדשים מתוך הפורטל במקום ב‑Cloudflare.</p>
+    <p><b>מה שחשוב לדעת לפני:</b> לאפליקציה אין היום מושג של "משתמש" — אין התחברות ואין זהות. כל מה שנשמר (מועדפים, אחרונים, מיון, הטוקן) יושב ב‑localStorage של המכשיר. לכן "הגדרות מותאמות אישית" הן בפועל <b>הגדרות לכל מכשיר</b>, וזה בסדר: הטלפון במטבח והטאבלט לא צריכים אותו גודל טקסט ממילא.</p>
+    <p>ההצעה מסדרת את מסך ההגדרות לשלושה כרטיסים, ומשאירה את כרטיס הסנכרון הקיים בדיוק כמו שהוא.</p>
+  </div>
+
+  <h2 class="sec">המסך המוצע — 402px</h2>
+
+  <div class="phone">
+    <div class="ph-head">
+      <div class="back-btn">‹ חזרה</div>
+      <h3>הגדרות</h3>
+    </div>
+    <div class="ph-body">
+
+      <div class="form-card">
+        <p class="card-title">המכשיר הזה</p>
+        <p class="card-sub">כל מכשיר מוגדר בנפרד. לא מסתנכרן.</p>
+
+        <label class="first">גודל טקסט במתכון</label>
+        <div class="seg">
+          <button type="button" aria-pressed="false">קטן</button>
+          <button type="button" aria-pressed="true">רגיל</button>
+          <button type="button" aria-pressed="false">גדול</button>
+        </div>
+
+        <label>מיון ברירת מחדל</label>
+        <select>
+          <option>אחרונים</option>
+          <option>לפי שם</option>
+          <option>לפי זמן הכנה</option>
+        </select>
+
+        <div style="margin-top:18px">
+          <div class="sw-row">
+            <div class="t">
+              <b>המסך נשאר דלוק במתכון</b>
+              <span>כבר עובד אוטומטית היום. ההצעה רק חושפת כיבוי.</span>
+            </div>
+            <div class="sw on"><i></i></div>
+          </div>
+          <div class="sw-row">
+            <div class="t">
+              <b>פתיחת מתכון במסך מלא</b>
+              <span>מדלג ישר לתצוגת הזום.</span>
+            </div>
+            <div class="sw"><i></i></div>
+          </div>
+        </div>
+
+        <button class="primary-btn">שמור</button>
+      </div>
+
+      <div class="form-card">
+        <p class="card-title">סנכרון</p>
+        <p class="card-sub">בדיוק הכרטיס הקיים — לא נגעתי בו.</p>
+
+        <label class="first">GitHub Token (fine-grained)</label>
+        <input type="text" dir="ltr" placeholder="github_pat_...">
+        <label>מאגר (owner/repo)</label>
+        <input type="text" dir="ltr" value="galss94-oss/gal-recipe-book">
+        <div class="note-row">
+          <button class="edit-btn">בדוק חיבור</button>
+        </div>
+        <p class="set-hint">הטוקן נשמר בדפדפן של המכשיר הזה בלבד.</p>
+      </div>
+
+      <div class="form-card">
+        <p class="card-title">גישה</p>
+        <p class="card-sub">לתצוגה בלבד. ההוספה נשארת ב‑Cloudflare.</p>
+
+        <div class="ro">
+          <b>למה לא מכאן?</b> הפורטל הוא עמוד סטטי ב‑GitHub Pages, בלי שרת. כדי להוסיף משתמש מכאן צריך מפתח API של Cloudflare בתוך הקוד — וכל מי שפותח את האתר יכול לקרוא אותו ולשנות לך את מדיניות הגישה. זה לא שווה את הנוחות.
+        </div>
+
+        <ul class="ppl">
+          <li><span class="em">galss94@gmail.com</span><span class="tag">בעלים</span></li>
+          <li><span class="em">example@gmail.com</span><span class="tag">צפייה</span></li>
+        </ul>
+
+        <div class="note-row">
+          <button class="edit-btn">פתח ב‑Cloudflare ↗</button>
+        </div>
+        <p class="set-hint">הרשימה נטענת לקריאה בלבד; ההוספה והמחיקה נעשות בדשבורד.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <h2 class="sec">רעיונות נוספים — תבחר מה נכנס</h2>
+  <ul class="ideas">
+    <li>
+      <b>טיימר מתוך המתכון</b>
+      <span class="d">כפתור טיימר צף בתצוגת מתכון, עם התראה. ידיים מלוכלכות לא צריכות לצאת לאפליקציית שעון.</span>
+      <span class="cost">בינוני · צריך אישור התראות</span>
+    </li>
+    <li>
+      <b>"בישלתי את זה" ודירוג</b>
+      <span class="d">מתחבר ל‑notes.json שכבר קיים, ומשפר את "בישלת לאחרונה" שהיום מתעדכן מכל פתיחה.</span>
+      <span class="cost">קטן</span>
+    </li>
+    <li>
+      <b>מצב מטבח</b>
+      <span class="d">טקסט גדול, מעבר בין עמודים בכפתורים ענקיים, בלי ניווט מסביב. מרחיב את גודל הטקסט למעלה למצב שלם.</span>
+      <span class="cost">בינוני</span>
+    </li>
+    <li>
+      <b>רשימת קניות</b>
+      <span class="d">מסמנים מתכונים, מקבלים רשימה אחת. חסם אמיתי: עמודי המתכון הם תמונות, אין טקסט מרכיבים במבנה הנתונים.</span>
+      <span class="cost">גדול · לא ממליץ עכשיו</span>
+    </li>
+    <li>
+      <b>חיפוש לפי מה שיש בבית</b>
+      <span class="d">אותו חסם בדיוק כמו רשימת הקניות, ותלוי בה.</span>
+      <span class="cost">גדול · תלוי בקודם</span>
+    </li>
+  </ul>
+
+  <p class="foot">כל הצבעים והמרווחים לקוחים מ‑index.html. כל יעד מגע ‎44px‎ ומעלה, טקסט גוף ‎5.1:1‎ ומעלה.</p>
+
+</div>
+</body>
+</html>

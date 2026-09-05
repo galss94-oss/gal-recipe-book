@@ -1,0 +1,14 @@
+THE DEPENDENCY MAP — RE-VERIFY IT EVERY REVIEW (Gal, 15/08/2026).
+
+`Projects/Funds overview and Financial portfolio/DEPENDENCY-MAP.md` tells the daily triage task which surfaces a figure feeds, so design-gate item 8 is a lookup instead of a search. It is only as current as this review makes it.
+
+1. Regenerate Section B: python3 "iPad Dashboards/_regen/dependency_map.py"
+   Section B is generated. Never hand-edit it — if it is wrong, fix the script.
+
+2. Re-read Section A (semantic couplings) against the current artifacts. These share no common string, so nothing catches a missing one automatically — that is the whole reason Section A is written by hand. For each row, confirm the consuming surfaces named are still the ones that consume it, and add any coupling introduced since the last review. A feature shipped since then that reads a figure another surface also shows is exactly what you are looking for.
+
+3. Clear the UNVERIFIED section: for each entry either prove it with two concrete file:line references and move it into the map proper, or delete it and say why. Nothing stays UNVERIFIED across two reviews.
+
+4. Report: how many rows in each section, what you added, what you removed, and anything still unproven.
+
+Why this is a hard step: a stale map is worse than no map. The next session trusts it, checks only the places it names, and stops looking — so a coupling that fell out of the map becomes a figure that quietly disagrees across surfaces. If you cannot verify the map this review, say so explicitly in the report so nobody relies on it until the next one.

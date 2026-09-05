@@ -1,0 +1,21 @@
+KEEP THE ENTRY SHORT — IT IS READ AT THE START OF EVERY FUTURE RUN (Gal, 2026-09-03).
+
+`changelog.py --read` runs in STEP 0 of every run, so an entry you write today is re-read by
+every run for as long as it stays in the window. Four 500-word entries is ~3,500 tokens before
+any work begins, and it compounds.
+
+Per change: **one line for what changed, plus at most two sentences of why** — and write the
+why only when it would stop a future session undoing it. "Residue, not a decision" earns its
+place. "I measured 272px against 610px and the first probe was wrong because the viewport was
+still 834" does not: that is forensic detail, and it belongs in
+`Projects/Funds overview and Financial portfolio/PM reviews/backlog-<date>.md`, which is read
+on purpose rather than on every run.
+
+The test for what stays: **would a session that skipped this line undo your work, or ship the
+same bug again?** If yes, keep it. If it only proves you were thorough, move it to the review file.
+
+DURABLE RULES DO NOT BELONG HERE AT ALL. A rule that applies to every future run — "ps the regen
+directory before the first edit", "read jpg not png and stat a screenshot before believing it" —
+goes into `DASHBOARD-EDITING-GUIDE.md` where it is found by someone looking for rules. Left in
+the changelog it scrolls out of the window and is re-learned the expensive way. Log that you
+added the rule; do not log the rule itself.

@@ -1,0 +1,178 @@
+Refresh every data source behind gal-finance, publish, and then sync the in-app views. This
+merges the old `weekly-dashboard-refresh-deploy` (Monday) and `weekly-artifact-view-sync`
+(Sunday), which between them built the site twice a weekend for no reason. Full step detail
+lives in `Scheduled/weekly-dashboard-refresh-deploy/SKILL.md` (kept on disk, disabled) — follow
+it, with the changes noted below. All paths under /Users/galsamuchian/Documents/Claude/.
+
+STEP 0 — SYNC. python3 "iPad Dashboards/_regen/changelog.py" --read
+The daily triage edits the same artifacts. Read what it changed before touching anything; a
+refresh that reverts yesterday's accepted fix is worse than the bug it fixed.
+
+STEP 1 — DATA MIRRORS. Refresh `_regen/liveprices.b64` and `_regen/crypto.b64` from Drive
+(fileIds 1JaE2kBDfJPa6uBPonpHXj21yauOlytiGVAF_1JDYDkw and
+1iEchjjRZGz4sNxQgMZZi2xI1LzXjRh63Dh6HK0uvXB0, exportMimeType text/csv). For funds, read the
+MASTER, not the mirror — the mirror froze silently on 2026-06-19 and the build kept publishing
+months-old net worth: mcp__googlesheets__readSpreadsheet, spreadsheetId
+1yfJsfTt4LO9PPZZPmAgvZzbVAaXkdJ-EYDCY6P384Ts, range 'Funds per month!A1:K60', FORMATTED_VALUE →
+write to `_regen/_funds_master.json` → python3 "iPad Dashboards/_regen/funds_from_master.py".
+Back up the .b64 files first. Column D of LivePrices is `PrevClose`
+(`=IFERROR(GOOGLEFINANCE($A<row>,"closeyest"),"")`), added 08/08/2026 so the RSU header can show a
+real day-over-day move instead of guessing.
+
+**If a ticker was added to the sheet since the last run, extend column D to its row in BOTH the
+master and the mirror** — a missing D means that ticker's row silently loses its day change, and
+nothing else complains. Do not eyeball it; after refreshing the mirror, run:
+
+    python3 -c "import base64,csv,io; rows=list(csv.reader(io.StringIO(base64.b64decode(open('iPad Dashboards/_regen/liveprices.b64').read()).decode()))); bad=[r[0] for r in rows[1:] if r and r[0].strip() and (len(r)<4 or not r[3].strip())]; print('MISSING PrevClose (col D):', ', '.join(bad) if bad else 'none')"
+
+Anything other than `none` names the tickers to fix in BOTH sheets before you continue.
+
+STEP 1b — FRESHNESS GATE. python3 "iPad Dashboards/_regen/check_mirror_freshness.py"
+Non-zero exit = DO NOT DEPLOY. Restore the backups, tell Gal which source looks frozen and what
+it last contained, and stop. This gate exists because of the incident above.
+
+STEP 2 — DERIVED DATA. In order:
+  python3 "iPad Dashboards/_regen/refresh_cards.py"        (credit-card CARD_DATA)
+  python3 "iPad Dashboards/_regen/pension_estimate.py"     (hishtalmut + pension, published yields)
+
+  Property — CHECK THE GATE BEFORE YOU SEARCH. Read the last `period` in
+  `Projects/Master project/memory/property.json`. The index is roughly bi-monthly, so **if that
+  period is less than 6 weeks old, write "property: index not due" and skip this item entirely** —
+  no search, no lookup. Most weeks land here and that is the expected outcome, not a shortcut.
+
+  Only when the last recorded period is 6+ weeks old: check whether the CBS home-price index has
+  published a period newer than that. If it has:
+  python3 "iPad Dashboards/_regen/property_estimate.py" --set-index '[{"period":"YYYY-MM","pct":<n>}]'
+  Only add a period confirmed by a source.
+
+STEP 2b — USD/ILS FALLBACK REBASE, MONTHLY (Gal, 19/08/2026). Run every week:
+  python3 "iPad Dashboards/_regen/rebase_fx.py"
+**It no-ops unless the calendar month has changed since the last recorded point**, which is what
+makes it monthly without needing a monthly task. Nothing to decide most weeks; just run it.
+WHY IT EXISTS. Every page fetches USD/ILS live at load time, and every page also carries a
+HARDCODED fallback for when that fetch fails. The live path was maintained and the fallbacks were
+not. On 19/08/2026 crypto sat at 3.15 against a live 2.97475 — **5.9% out** — while the other four
+sat at 2.9551. A stale fallback does not look broken: it silently prices a whole page at an old
+rate the moment the network hiccups, and crypto disagreed with the other four by 6% whenever that
+happened. The script rebases all five onto the live rate and appends one dated point to
+`Projects/Master project/memory/fx-history.json`, so drift becomes visible instead of silent.
+If it rewrote anything it prints `rebased <page> <old> -> <new>`. Those artifacts must then be
+mirrored to `Projects/Master project/` and rebuilt in STEP 4 like any other change — the script
+does not build. `--check` reports drift and changes nothing (exit 1 if any page is stale).
+WHAT THIS IS NOT. It does not give historical per-trade FX. The realized trades in the stock
+artifact carry no buy- or sell-date rate, so the shekel gain Israeli CGT is actually assessed on
+still cannot be computed for them — see `backlog-2026-08-19.md` §2, still awaiting Gal's call.
+This builds that series going FORWARD, one point a month, so there is real history to price
+against later. Do not let the existence of fx-history.json be mistaken for backfilled history.
+
+STEP 3 — EARNINGS. For each holding in `memory/holdings.json` whose nextEarnings date has passed
+or whose "updated" stamp is over ~5 weeks old, search for the confirmed next date and consensus,
+and update BOTH holdings.json and the baked DATA.holdings line in the stock artifact. For any
+NON-ETF holding that has reported since the last run, rewrite its /*LAST_EARNINGS*/ entry: one
+plain-English sentence a casual investor understands, then exactly 3 bullets under ~15 words
+each, plus the share-price reaction. No jargon, no advice, no recommendations — describe only
+what was reported. Only write figures the search confirmed; if unclear, leave the previous entry
+and say so.
+
+STEP 3b — UNITY'S QUARTER, for the RSU page's Reports tab (owner assigned 08/08/2026 under the
+"every feature has a maintenance owner" rule — §0יב of DASHBOARD-EDITING-GUIDE).
+
+ESTABLISH THIS FROM THE FILE FIRST — IT IS A GREP, NOT A SEARCH. Unity reports four times a year,
+so roughly 48 weeks in 52 there is nothing to do here, and finding that out must be cheap:
+
+    grep -n -m1 -A3 'UNITY_EARNINGS' "Artifacts/rsu-dashboard-live/index.html"
+
+That prints `asOf`, `quarter` and `nextDue`. Then:
+
+- `nextDue` is a **future** date → no print has happened. Write "Unity: no new print" and move on.
+  Do not search investor relations, do not open a summary article, do not check the price.
+- `nextDue` has **passed**, or is **null** → a print may have happened. Now do the work below.
+
+Reaching for investors.unity.com to discover that nothing was published is the expensive way to
+learn what the file already knows.
+
+Unity reports roughly early Feb / May / Aug / Nov. **If Unity has reported since the last run,**
+rewrite `/*UNITY_EARNINGS*/` in `Artifacts/rsu-dashboard-live/index.html` (and mirror to
+`Projects/Master project/unity-rsu-tracker-artifact.html`). Otherwise leave it alone and say
+"Unity: no new print".
+> **Corrected 14/08/2026.** This line used to say `rsu-dashboard-artifact.html`, which is not the
+> mirror. Two independent sources say otherwise and they agree with each other:
+> `DASHBOARD-EDITING-GUIDE.md` §8, and — the one that settles it — `_regen/resync_source_copies.py`,
+> which maps `rsu-dashboard-live` → `unity-rsu-tracker-artifact.html` in code. So this task has been
+> writing its Unity earnings rewrite into a file nothing reads. Nothing broke, because
+> `build_ipad.py` builds from `Artifacts/`, not from the mirrors — but the rewrite was landing in a
+> copy that never reached anything, and the real mirror was only correct when some other run
+> happened to touch it. If you see `rsu-dashboard-artifact.html` anywhere, it is a leftover.
+Take every figure from **Unity's own press release** at investors.unity.com, never from a summary
+article, and the price reaction from GOOGLEFINANCE OHLCV around the report date. Update:
+- `asOf`, `quarter`, `nextDue`
+- `last` — revenue, YoY, the beat against consensus, the segment rows, the profit rows
+- `next` — the new guidance, and rewrite the four-line recap so it describes THIS quarter
+- `verdict` — new guidance midpoint vs the consensus that stood before it
+- `beats` — push the quarter just reported (actual vs the TOP of the range Unity had guided) and
+  keep the list to the last 4
+- `react` — the close before the print, the close on the day, the next close, the day's range and
+  volume
+**`nextDue` IS NOW ON SCREEN — CHECK IT EVERY RUN (Gal, 14/08/2026).** He asked for the expected
+date of the next report to appear on the Reports tab's next-quarter card, and added: *"So we should
+add this check to one of the weekly checks."* This task owns it (playbook rule 4 — it already owns
+every recurring data pull, including earnings, so no new task was created). It renders as
+`.rp-due` — "Report expected <nextDue>" — and it is rendered **only when `nextDue` is set**, so:
+- If Unity has **published** a date for the next report, put it in `nextDue` in the form it is
+  published in (`early November`, or an exact date if there is one).
+- If Unity has reported and **no next date has been published yet**, set `nextDue` to **null**.
+  The line then disappears rather than showing a stale or guessed date. Do not invent "early
+  November" from the usual Feb/May/Aug/Nov cadence — a guessed date displayed as fact is exactly
+  the 08/08 defect, where a stale `nextEarnings` was promoted into the Upcoming strip and told Gal
+  a company would report on a day it had already reported.
+- If `nextDue` is a date that has **already passed**, that is a stale value, not a forecast: either
+  replace it with the published next one or set it to null. Say which in the summary.
+Two things that are easy to get wrong and matter: Unity guides on **strategic revenue**, not total,
+because ironSource was sunset (30/04/2026) and Supersonic sold (04/08/2026) — never compare
+guidance to a total-revenue consensus. And the tab must stay **highlights only**: if a section grows
+past what fits the existing layout, cut it rather than letting the tab sprawl (Gal, 08/08/2026:
+"only the highlights that matters - but don't miss a single one that matters").
+
+STEP 4 — BUILD + PUBLISH. Sync the Master-project source copies, then
+  python3 "iPad Dashboards/_regen/build_ipad.py"
+Expect 5 "wrote" lines, the rsu model guard line, and `ok` from the smoke test on ALL FIVE pages.
+**FAIL or INCONCLUSIVE = do not deploy.** Then bash "iPad Dashboards/_regen/deploy.sh".
+
+STEP 5 — SYNC THE IN-APP VIEWS (this is the merged-in half). Call mcp__cowork__update_artifact
+for each of the five artifacts whose source changed this run, html_path
+/Users/galsamuchian/Documents/Claude/Artifacts/<id>/index.html, with a one-line summary. Syntax-check
+each before syncing. This is the ONLY task that calls update_artifact — the daily triage must not.
+
+STEP 6 — LOG. python3 "iPad Dashboards/_regen/changelog.py" --add "weekly refresh" "<one line per data source that actually changed>"
+Keep it short — `changelog.py --read` runs at the start of every run of every task, so an entry
+written today is re-read by every run for as long as it stays in the window. One line per source
+that actually changed, plus at most two sentences of why, and only when the why would stop a
+future session undoing it. Forensic detail belongs in `PM reviews/backlog-<date>.md`. A durable
+rule belongs in `DASHBOARD-EDITING-GUIDE.md`, not here — log that you added it, not the rule
+itself. And log under the label that matches who you are: this task logs `weekly refresh`.
+
+STEP 7 — REPORT, short, in Hebrew: snapshot date deployed, net worth, crypto total + MoM, stock
+market value, USD/ILS used, long-term savings estimate, any earnings updated, and any staleness
+warning. Research and reporting only — never execute trades or move money. Not investment advice.
+---
+AFTER `deploy.sh`, READ THE SCREENSHOTS. (Gal, 09/08/2026.)
+Every push to `main` renders 60 views of the deployed site in real Chromium and uploads them as
+the run's `shots` artifact (Actions -> the run -> Artifacts -> `shots` -> unzip -> `README.md`,
+which leads with what changed since the previous run). Read the job summary first: anything under
+"Noticed while rendering" is a hard finding — sideways scroll, a page that threw, a theme toggle
+that painted no glyph, a strip control that failed its hit test. This is the only check that sees
+PIXELS; on 09/08 three pages shipped with an empty theme control while every grep, `node --check`,
+`smoke_test.js`, `layout_check.js` and `contrast.py` were green.
+🔴 The shots go to an ARTIFACT and must NEVER be pushed to a branch of this repo — it is connected
+to Cloudflare Pages, so a branch becomes a public website. That mistake exposed Gal's net worth and
+both bank balances for an hour on 09/08. `deploy.sh` now refuses to deploy a `ci/shots.yml` that
+contains a `git push`; do not "fix" that guard. Full account: DASHBOARD-EDITING-GUIDE.md §0יד.
+
+BROKER ANCHOR — ask Gal for a fresh IBI screenshot when it expires (added 21/08/2026).
+`iPad Dashboards/_regen/broker-anchor.json` is what proves the dashboard agrees with Gal's broker
+rather than merely with itself. It carries an `asOf` and a `maxAgeDays` (5), and
+`_price_freshness_check.js` SKIPS the reconciliation once it is older than that — deliberately,
+because a stale anchor proves nothing. Skipping is safe but it means the strongest check is off.
+Each run: read the file's `asOf`. If it is older than `maxAgeDays`, ask Gal in the report for a
+current IBI Equity screenshot (cost basis + % per position), then update `tickers` and `asOf`.
+This is the maintenance owner assigned under STEP 4b for the 21/08 price-check split.

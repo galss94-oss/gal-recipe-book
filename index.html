@@ -867,7 +867,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v25';
+const APP_VERSION = 'sw v26';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -1213,11 +1213,49 @@ function renderRecipe(id){
   const LOOK_BEHIND = 0.25, LOOK_AHEAD = 0.75;
   const BLANK = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   const pageImgs = [], pageWraps = [];
+  /* Reported 2026-09-12 (b18 page 6, iPhone 402x874): a page painted only its top
+     third, cream below. Not the source - all seven pagesv/b18-*.jpg are intact 820x458.
+     Not unload churn either: b18 has 7 pages, under MAX_RESIDENT, so nothing is ever
+     unloaded. The cause is the ONE thing the 2026-08-16 fix introduced - with no
+     sliding window, updateWindow() assigns all seven .src values in a single
+     synchronous loop, so seven decodes start in the same tick. decoding='async' then
+     lets the compositor paint an image that is still being decoded, and a baseline
+     JPEG mid-decode is exactly a top strip.
+     Two changes, and they only work together:
+     1. decoding is 'sync' on flow pages, not 'async'. 'async' is precisely the
+        permission to present an image that is not finished decoding; 'sync' makes the
+        frame atomic. It is affordable only because of (2).
+     2. Loads are serialized - a page sets its src and the next one waits for its load
+        event before starting. One decode in flight at a time, arriving top-to-bottom,
+        which is reading order anyway.
+     Do NOT reach for img.decode() here, which is the obvious way to write this: on the
+     pages below the fold it never settles (measured in Chrome at 402px - the recipe
+     container is still display:none while renderRecipe runs, and show() only runs at
+     the end), and the chain stops dead after page 1. The load event always fires.
+     The 3s cap keeps one stuck page from stalling the rest of the recipe. */
+  let loadChain = Promise.resolve();
+  const settled = img => new Promise(res => {
+    if(img.complete && img.naturalWidth) return res();
+    let done = false;
+    const fin = ()=>{
+      if(done) return;
+      done = true; clearTimeout(t);
+      img.removeEventListener('load', fin); img.removeEventListener('error', fin);
+      res();
+    };
+    const t = setTimeout(fin, 3000);
+    img.addEventListener('load', fin); img.addEventListener('error', fin);
+  });
   const startLoad = i => {
     const img = pageImgs[i];
     if(!img || img.dataset.started === '1') return;
     img.dataset.started = '1';
-    img.src = img.dataset.src;
+    const src = img.dataset.src;
+    loadChain = loadChain.then(()=>{
+      if(img.dataset.started !== '1') return;   // unloaded again while queued
+      img.src = src;
+      return settled(img);                       // onerror still drives retryPage
+    });
   };
   const unload = i => {
     const img = pageImgs[i];
@@ -1258,7 +1296,7 @@ function renderRecipe(id){
   srcs.forEach((src,i)=>{
     const w = document.createElement('div'); w.className = 'page-wrap';
     const img = document.createElement('img');
-    img.decoding = 'async';
+    img.decoding = 'sync';   // atomic paint; safe because startLoad serializes them
     img.dataset.src = flowSrc(src);
     img.alt = `${r.title} — עמוד ${i+1}`;
     img.onclick  = ()=>openLightbox(src, img.alt);

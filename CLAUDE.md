@@ -88,8 +88,10 @@ Push to `main`; Pages rebuilds in ~1 min. Auth is the `gh` CLI (`gh auth setup-g
 A service worker (`sw.js`) caches the app for offline use: the shell and `index.json` are
 network-first so updates land on the next open, page images are cache-first. Bump
 `VERSION` in `sw.js` when the shell changes so old caches are dropped.
-If `gh` is missing (it has been installed to `/tmp` before and wiped), reinstall and
-re-run the device-code login.
+`gh` is installed permanently at `~/.local/bin/gh` (on PATH; installed 2026-09-18) and
+git's credential helper points at that absolute path. It no longer lives in `/tmp` and no
+longer disappears on reboot — if a push fails on auth, check `gh auth status` before
+assuming the binary is gone.
 
 ---
 

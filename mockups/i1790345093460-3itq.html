@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>תמונה למתכון — שתי אפשרויות</title>
+<style>
+  :root{
+    --bg:#f6efe2; --bg2:#efe4d0; --card:#fdfaf3; --ink:#42332a; --muted:#7a6857;
+    --accent:#a34c17; --accent2:#c07a2c; --accent-soft:#f4e3cd; --line:#dfcfb5;
+    --frame:#b98d54;
+    --shadow:0 2px 10px rgba(120,85,45,.12);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; color:var(--ink); background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    line-height:1.55;
+  }
+  .wrap{max-width:430px; margin:0 auto;}
+  .hero{
+    background:var(--card); border:2px solid var(--frame); border-radius:20px;
+    padding:18px 16px; text-align:center; box-shadow:var(--shadow); margin-bottom:8px;
+  }
+  .hero .orn{color:var(--accent2); font-size:15px; letter-spacing:6px; margin-bottom:6px;}
+  .hero h1{font-size:19px; margin:0; color:#5b3a1e; font-weight:800;}
+  .hero .tag{color:var(--muted); font-size:13px; margin:6px 0 0;}
+  .lead{
+    background:var(--accent-soft); border:1px solid var(--line); border-radius:14px;
+    padding:12px 14px; font-size:14px; margin:14px 0 22px;
+  }
+  h2{
+    font-size:16.5px; color:#5b3a1e; margin:26px 0 4px; font-weight:800;
+    display:flex; align-items:center; gap:8px;
+  }
+  h2 .num{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(160deg,var(--accent2),var(--accent)); color:#fff;
+    font-size:14px; display:flex; align-items:center; justify-content:center;
+  }
+  .sub{color:var(--muted); font-size:13.5px; margin:0 0 12px;}
+  .panel{
+    background:var(--bg2); border:1.5px solid var(--line); border-radius:18px;
+    padding:14px; margin-bottom:10px;
+  }
+  .panel .cap{font-size:12.5px; color:var(--muted); margin:0 0 10px; font-weight:700;}
+
+  /* ---- Recipe card, copied from the app ---- */
+  .recipe-card{
+    background:var(--card); border:1.5px solid var(--frame); border-radius:16px;
+    padding:14px; margin:10px 0 16px; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:14px; position:relative;
+  }
+  .time-badge{
+    position:absolute; top:-10px; left:-8px; z-index:2;
+    width:54px; height:54px; border-radius:50%;
+    background:linear-gradient(160deg, var(--accent2), var(--accent));
+    border:2px solid #fdfaf3; box-shadow:0 3px 8px rgba(163,76,23,.35);
+    color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    line-height:1.05;
+  }
+  .time-badge .val{font-size:16px; font-weight:800;}
+  .time-badge .unit{font-size:10.5px; font-weight:700; opacity:.92;}
+  .recipe-card .thumb{
+    width:72px; height:72px; border-radius:12px; flex-shrink:0;
+    border:1px solid var(--line); background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; color:var(--muted); text-align:center; padding:4px; font-weight:700;
+  }
+  .thumb.page{background:repeating-linear-gradient(180deg,#fdfaf3 0 7px,#efe4d0 7px 9px);}
+  .thumb.dish{background:linear-gradient(150deg,#c07a2c,#a34c17); color:#fff;}
+  .recipe-card .info{flex:1; min-width:0; padding-left:26px;}
+  .recipe-card .title{font-weight:800; font-size:16px; margin:0 0 4px; color:#5b3a1e;}
+  .recipe-card .desc{color:var(--muted); font-size:13.5px; margin:0;}
+
+  /* ---- Add view, copied from the app ---- */
+  .file-drop{
+    border:1px dashed var(--frame); border-radius:14px; background:var(--card);
+    min-height:64px; padding:14px; text-align:center; font-weight:700;
+    color:var(--accent); font-size:15px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .file-drop span{font-size:13px; font-weight:400; color:var(--muted); margin-top:4px;}
+  .row2{display:flex; gap:10px;}
+  .row2 .file-drop{flex:1;}
+  .btn{
+    min-height:48px; border-radius:14px; border:1px solid var(--line);
+    background:var(--card); color:var(--accent); font-size:15px; font-weight:700;
+    display:flex; align-items:center; justify-content:center; padding:0 16px;
+  }
+  .note{
+    font-size:13px; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-right:4px solid var(--accent2);
+    border-radius:12px; padding:11px 13px; margin-top:12px;
+  }
+  .note b{color:#5b3a1e;}
+  .ask{
+    margin-top:30px; background:var(--card); border:2px solid var(--frame);
+    border-radius:18px; padding:16px; box-shadow:var(--shadow);
+  }
+  .ask h2{margin-top:0;}
+  .ask p{margin:0 0 10px; font-size:14.5px;}
+  .ask ul{margin:0; padding-inline-start:20px; font-size:14.5px;}
+  .ask li{margin-bottom:6px;}
+  footer{margin-top:26px; text-align:center; color:var(--muted); font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="orn">• • •</div>
+    <h1>תמונה למתכון</h1>
+    <p class="tag">מוקאפ לדיווח i1790345093460-3itq</p>
+  </div>
+
+  <p class="lead">
+    ביקשת "אפשרות להעלות גם תמונה בשביל מתכון". יש לזה שתי משמעויות שונות לגמרי,
+    ולא ידעתי באיזו התכוונת — אז הנה שתיהן. תגיד לי א׳, ב׳ או שתיהן, ואבנה.
+  </p>
+
+  <h2><span class="num">א</span>תמונת מנה על הכרטיס</h2>
+  <p class="sub">
+    היום התמונה הקטנה בכרטיס היא העמוד הראשון של המתכון — דף מאויר, לא המנה.
+    אפשר לצרף למתכון תמונה של התוצאה, והיא תופיע במקום.
+  </p>
+
+  <div class="panel">
+    <p class="cap">היום</p>
+    <div class="recipe-card">
+      <div class="time-badge"><span class="val">45</span><span class="unit">דק׳</span></div>
+      <div class="thumb page">עמוד 1</div>
+      <div class="info">
+        <p class="title">פסטה קארי ירוק וקוקוס</p>
+        <p class="desc">ארוחה אחת, סיר אחד</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="cap">עם תמונת מנה</p>
+    <div class="recipe-card">
+      <div class="time-badge"><span class="val">45</span><span class="unit">דק׳</span></div>
+      <div class="thumb dish">תמונה<br>שלך</div>
+      <div class="info">
+        <p class="title">פסטה קארי ירוק וקוקוס</p>
+        <p class="desc">ארוחה אחת, סיר אחד</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>איך זה מתחבר:</b> כפתור "צרף תמונה" בתוך מסך המתכון, עם מצלמה או גלריה.
+    התמונה נשמרת אצלך במכשיר, לא נוגעת בעמודים של המתכון.
+  </div>
+
+  <h2><span class="num">ב</span>תמונה כמקור למתכון</h2>
+  <p class="sub">
+    היום אפשר להוסיף מתכון רק מקובץ PDF. אם צילמת דף מספר בישול או קיבלת צילום מסך,
+    אין דרך להכניס אותו לספר.
+  </p>
+
+  <div class="panel">
+    <p class="cap">היום</p>
+    <div class="file-drop">
+      בחר קובץ PDF
+      <span>אמלא את שאר הפרטים אוטומטית</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="cap">עם תמונה</p>
+    <div class="row2">
+      <div class="file-drop">בחר PDF</div>
+      <div class="file-drop">צלם או בחר תמונה</div>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>איך זה מתחבר:</b> עמודי מתכון הם ממילא תמונות, אז תמונה שתבחר הופכת לעמוד
+    בדיוק כמו עמוד מ־PDF. את הכותרת והזמן תמלא ידנית — אין מאיפה לקרוא אותם.
+  </div>
+
+  <div class="ask">
+    <h2>מה אני צריך ממך</h2>
+    <p>תשובה אחת מספיקה:</p>
+    <ul>
+      <li><b>א׳</b> — תמונה של המנה על הכרטיס.</li>
+      <li><b>ב׳</b> — להוסיף מתכון מתמונה ולא רק מ־PDF.</li>
+      <li><b>שתיהן</b> — אבנה את ב׳ קודם, היא הקטנה משתיהן.</li>
+    </ul>
+  </div>
+
+  <footer>מוקאפ בלבד — שום דבר כאן עוד לא באפליקציה</footer>
+</div>
+</body>
+</html>

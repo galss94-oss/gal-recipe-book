@@ -118,3 +118,10 @@ then writes `done <date>` / `awaiting approval` back. **It never deletes rows.**
 
 ---
 
+### Recipe requests from a photo (added 2026-09-25)
+
+An `awaiting kitchen` row with `category: "request"` is Gal asking for a new recipe. When
+its `shot` is set (`issues/<id>.jpg`), that image is the recipe he photographed — a
+cookbook page or a screenshot. Read it, write the recipe in his voice per
+`KITCHEN_MENTOR.md`, and produce it through the normal NotebookLM → PDF → import path.
+Close the row with `status: "done <date>"` and a `resolution` naming the new recipe id.

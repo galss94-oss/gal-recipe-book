@@ -512,7 +512,7 @@
   .rp-shot-prev img{width:38px; height:26px; border-radius:5px; object-fit:cover; border:1px solid var(--line);}
   .rp-shot-prev button{
     border:none; background:none; color:#b03a2e; font-size:15px; cursor:pointer;
-    width:32px; height:32px; font-family:inherit;
+    width:44px; height:44px; font-family:inherit;
   }
   .rp-ctx{
     background:#fffdf8; border:1px solid var(--line); border-radius:12px;
@@ -663,9 +663,9 @@
       </div>
 
       <div id="rpShotSection">
-      <label>צילום מסך (לא חובה)</label>
+      <label id="rpShotLabel">צילום מסך (לא חובה)</label>
       <div class="rp-shot-row">
-        <button class="rp-shot-btn" onclick="document.getElementById('rpShot').click()">צרף צילום 📷</button>
+        <button class="rp-shot-btn" id="rpShotBtn" onclick="document.getElementById('rpShot').click()">צרף צילום 📷</button>
         <input type="file" id="rpShot" accept="image/*" style="display:none" onchange="rpOnShot()">
         <div class="rp-shot-prev" id="rpShotPrev">
           <img id="rpShotImg" alt="">
@@ -867,7 +867,7 @@ const CAT_KEYWORDS = [
   ["מאפים",["לחם","מאפה","פיצה","בצק","פוקאצ'ה"]],
   ["תוספות",["אורז","תפוחי אדמה","פוטטוס","בטטה","תוספת","קוסקוס","פתיתים"]],
 ];
-const APP_VERSION = 'sw v26';
+const APP_VERSION = 'sw v27';
 let BUILTIN = [];
 
 let userRecipes = [];
@@ -1716,13 +1716,13 @@ function rpSetReqMode(which){
     // in ask mode restore what openReport() decided; only the upload mode force-hides
     if(up) el.style.display = 'none';
     else if(id === 'rpDishRow')       el.style.display = '';
-    else if(id === 'rpShotSection' || id === 'rpCtx') el.style.display = 'none';
-    else el.style.display = '';
+    else if(id === 'rpCtx') el.style.display = 'none';
+    else el.style.display = '';    // rpShotSection too: a request can carry a photo of the recipe
   });
   document.getElementById('rpTitle').textContent = up ? 'העלאת מתכון מ-PDF' : 'בקשת מתכון חדש';
   document.getElementById('rpSub').textContent = up
     ? 'יש לך PDF של מתכון? אני אקרא אותו ואמלא את הפרטים.'
-    : 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.';
+    : 'כתוב מה בא לך שאכין, או צלם מתכון מספר או ממסך. הבקשה נשמרת בספר ואני קורא אותה בבוקר.';
 }
 /* Option B, 2026-09-02 (i1788153988954-3pes): the reports list lives in this sheet and
    nowhere else, so the ⚑ flow needs a way to reach it. Only the ⚑ flow gets these tabs -
@@ -1761,12 +1761,16 @@ function openReport(mode){
   RP_FORM_IDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.style.display = ''; });
   document.getElementById('rpTitle').textContent = req ? 'בקשת מתכון חדש' : '⚑ דיווח על תקלה';
   document.getElementById('rpSub').textContent = req
-    ? 'כתוב מה בא לך שאכין. הבקשה נשמרת בספר ואני קורא אותה בבוקר.'
+    ? 'כתוב מה בא לך שאכין, או צלם מתכון מספר או ממסך. הבקשה נשמרת בספר ואני קורא אותה בבוקר.'
     : 'ההקשר נלכד אוטומטית — לא צריך לתאר איפה אתה.';
   document.getElementById('rpCatLabel').textContent = req ? 'סוג הארוחה (לא חובה)' : 'מה הבעיה?';
   document.getElementById('rpTextLabel').textContent = req ? 'פרטים (לא חובה)' : 'פירוט (לא חובה)';
   document.getElementById('rpDishRow').style.display = req ? '' : 'none';
-  document.getElementById('rpShotSection').style.display = req ? 'none' : '';
+  /* A photo on a request is the recipe itself (a cookbook page, a screenshot) for the
+     recipes chat to turn into a proper page. i1790345093460-3itq, 2026-09-25. */
+  document.getElementById('rpShotSection').style.display = '';
+  document.getElementById('rpShotLabel').textContent = req ? 'צילום של המתכון (לא חובה)' : 'צילום מסך (לא חובה)';
+  document.getElementById('rpShotBtn').textContent = req ? 'צלם או בחר תמונה' : 'צרף צילום 📷';
   document.getElementById('rpCtx').style.display = req ? 'none' : '';
   document.getElementById('rpSend').textContent = req ? 'שלח בקשה' : 'שלח דיווח';
   document.getElementById('rpDish').value = '';
@@ -1858,13 +1862,14 @@ function rpOnShot(){
   fr.onload = ()=>{
     const img = new Image();
     img.onload = ()=>{
-      const MAX = 1200;
+      // a recipe photo has to stay readable (small print, ingredient lists); a bug screenshot doesn't
+      const MAX = rpMode === 'request' ? 2000 : 1200;
       const scale = Math.min(1, MAX / Math.max(img.width, img.height));
       const c = document.createElement('canvas');
       c.width = Math.round(img.width * scale);
       c.height = Math.round(img.height * scale);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      rpShotData = c.toDataURL('image/jpeg', 0.7);
+      rpShotData = c.toDataURL('image/jpeg', rpMode === 'request' ? 0.82 : 0.7);
       const kb = Math.round(rpShotData.length * 0.75 / 1024);
       document.getElementById('rpShotImg').src = rpShotData;
       document.getElementById('rpShotSize').textContent = kb + 'KB';
@@ -1888,8 +1893,8 @@ async function rpSubmit(){
   const text = document.getElementById('rpText').value.trim();
   const req = rpMode === 'request';
   const dish = document.getElementById('rpDish').value.trim();
-  if(req && !dish){
-    msg.className = 'rp-msg err'; msg.textContent = 'כתוב מה להכין';
+  if(req && !dish && !rpShotData){
+    msg.className = 'rp-msg err'; msg.textContent = 'כתוב מה להכין או צרף צילום של מתכון';
     return;
   }
   if(!req && !rpCat && !text){
@@ -1912,7 +1917,7 @@ async function rpSubmit(){
     categoryLabel: req ? 'בקשת מתכון' : (rpCat ? rpCat.label : ''),
     // a category with no text is a valid one-tap report
     text: req
-      ? dish + (rpCat ? ' · ' + rpCat.label : '') + (text ? ' — ' + text : '')
+      ? (dish || 'מתכון מצילום') + (rpCat ? ' · ' + rpCat.label : '') + (text ? ' — ' + text : '')
       : (text || ('[' + (rpCat ? rpCat.label : '') + ']')),
     page: w.page, section: w.section,
     device: d.text, zoomed: d.zoomed,

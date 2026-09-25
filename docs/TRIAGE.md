@@ -89,3 +89,17 @@ while the button told Gal "✓ נשלח. אכניס אותו לספר בבוקר
 Render geometry, the sidecar format, and the failure handling live in `docs/CONTENT.md`
 under "Inbox". Read that section only when an import fails or you are changing the importer —
 `import_inbox.py --dry-run` tells you what it would do without touching anything.
+
+## Recipe requests with a photo (added 2026-09-25, i1790345093460-3itq)
+
+In *בקשת מתכון* mode the sheet now offers "צלם או בחר תמונה": Gal photographs a recipe
+(a cookbook page, a screenshot) and asks for it to be turned into a book recipe. The row
+arrives as `category: "request"`, `status: "new"`, with the photo at `shot`
+(`issues/<id>.jpg`, up to 2000px / JPEG 0.82 so small print stays readable — bug
+screenshots stay at 1200px / 0.7). A dish name is optional when a photo is attached;
+`text` then starts with `מתכון מצילום`.
+
+Every `request` row is a **kitchen issue** — fulfilling it means generating a recipe page.
+Route it: `status: "awaiting kitchen"`, `resolution` saying what to make, and list it
+under `ממתין לצ'אט המתכונים`. Do not prune the `shot` of an `awaiting kitchen` row: for a
+request it is the source recipe, not a screenshot.
